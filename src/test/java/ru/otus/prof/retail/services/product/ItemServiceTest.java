@@ -43,7 +43,7 @@ public class ItemServiceTest {
     @Transactional
     @Rollback
     void testUpdateItem() {
-        Optional<Item> itemOptional = itemService.getItemWithDetails(1001L);
+        Optional<Item> itemOptional = itemService.getItem(1001L);
         assertTrue(itemOptional.isPresent());
 
         Item item = itemOptional.get();
@@ -59,12 +59,12 @@ public class ItemServiceTest {
     @Transactional
     @Rollback
     void testDeleteItem() {
-        Optional<Item> itemBeforeDeletion = itemService.getItemWithDetails(1001L);
+        Optional<Item> itemBeforeDeletion = itemService.getItem(1001L);
         assertTrue(itemBeforeDeletion.isPresent());
 
         itemService.deleteItem(1001L);
 
-        Optional<Item> deletedItem = itemService.getItemWithDetails(1001L);
+        Optional<Item> deletedItem = itemService.getItem(1001L);
         assertFalse(deletedItem.isPresent());
     }
 }

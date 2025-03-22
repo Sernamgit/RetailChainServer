@@ -19,18 +19,9 @@ public class ItemService {
         return itemRepository.save(item);
     }
 
-    // возвращаем всю инфу по товару ( barcode + price)
-    public Optional<Item> getItemWithDetails(Long article) {
-        Optional<Item> itemWithPrices = itemRepository.findByArticleWithPrices(article);
-        Optional<Item> itemWithBarcodes = itemRepository.findByArticleWithBarcodes(article);
-
-        if (itemWithPrices.isPresent() && itemWithBarcodes.isPresent()) {
-            Item item = itemWithPrices.get();
-            item.setBarcodes(itemWithBarcodes.get().getBarcodes());
-            return Optional.of(item);
-        }
-
-        return Optional.empty();
+    @Transactional
+    public Optional<Item> getItem(Long article) {
+        return itemRepository.findById(article);
     }
 
     @Transactional
