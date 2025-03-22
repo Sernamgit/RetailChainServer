@@ -23,7 +23,7 @@ public class ShiftServiceTest {
     private ShiftService shiftService;
 
     @Test
-    void getAllShiftsByCloseDate() {
+    void testGetAllShiftsByCloseDate() {
         LocalDate endDate = LocalDate.of(2024, 1, 1);
         boolean withPositions = true;
 
@@ -33,7 +33,7 @@ public class ShiftServiceTest {
     }
 
     @Test
-    void getShiftByShopNumberAndCloseDate() {
+    void testGetShiftByShopNumberAndCloseDate() {
         Long shopNumber = 1L;
         LocalDate endDate = LocalDate.of(2024, 1, 1);
         boolean withPositions = true;
@@ -44,7 +44,7 @@ public class ShiftServiceTest {
     }
 
     @Test
-    void getShiftsByShopNumberAndCashNumberAndCloseDate() {
+    void testGetShiftsByShopNumberAndCashNumberAndCloseDate() {
         Long shopNumber = 1L;
         Long cashNumber = 1L;
         LocalDate endDate = LocalDate.of(2024, 1, 1);

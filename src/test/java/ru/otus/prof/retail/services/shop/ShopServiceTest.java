@@ -29,7 +29,7 @@ public class ShopServiceTest {
     private CashRepository cashRepository;
 
     @Test
-    void createShop() {
+    void testCreateShop() {
         Shop shop = new Shop();
         shop.setNumber(10L);
         shop.setName("Test shop");
@@ -43,7 +43,7 @@ public class ShopServiceTest {
     }
 
     @Test
-    void getShopByNumber() {
+    void testGetShopByNumber() {
         Long shopNumber = 1L;
         String shopName = "Shop 1";
         String shopAddress = "Address 1";
@@ -57,7 +57,7 @@ public class ShopServiceTest {
     }
 
     @Test
-    void getShopByNumberWithCash() {
+    void testGetShopByNumberWithCash() {
         Long shopNumber = 1L;
         String shopName = "Shop 1";
         String shopAddress = "Address 1";
@@ -74,7 +74,7 @@ public class ShopServiceTest {
     }
 
     @Test
-    void updateShop() {
+    void testUpdateShop() {
         Long shopNumber = 2L;
         Optional<Shop> shopOpt = shopRepository.findByNumber(shopNumber);
         assertTrue(shopOpt.isPresent());
@@ -88,25 +88,21 @@ public class ShopServiceTest {
     }
 
     @Test
-    void deleteShop() {
+    void testDeleteShop() {
         Shop shop = new Shop();
         shop.setNumber(20L);
         shop.setName("Test shop");
         shop.setAddress("Test address");
 
-        // Сохраняем магазин в базу данных
         Shop createdShop = shopService.createShop(shop);
         assertNotNull(createdShop.getId(), "Shop not created");
 
-        // Шаг 2: Удаляем магазин
         Long shopId = createdShop.getId();
         shopService.deleteShop(shopId);
 
-        // Шаг 3: Проверяем, что магазин удален
         Optional<Shop> deletedShop = shopRepository.findById(shopId);
         assertFalse(deletedShop.isPresent(), "Shop wasn't deleted");
 
-        // Дополнительная проверка: убедимся, что кассы магазина также удалены
         List<Cash> cashList = cashRepository.findByShopNumber(createdShop.getNumber());
         assertTrue(cashList.isEmpty(), "Cashes were not deleted");
     }

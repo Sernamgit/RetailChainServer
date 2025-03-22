@@ -20,7 +20,7 @@ public class PurchaseServiceTest {
     private PurchaseService purchaseService;
 
     @Test
-    void getPurchaseByShiftId() {
+    void testGetPurchaseByShiftId() {
         Long shiftId = 1L;
 
         List<Purchase> purchases = purchaseService.getPurchaseByShiftId(shiftId);
@@ -29,7 +29,7 @@ public class PurchaseServiceTest {
     }
 
     @Test
-    void getPurchaseByShopNumberAndDate() {
+    void testGetPurchaseByShopNumberAndDate() {
         Long shopNumber = 1L;
         LocalDate endDate = LocalDate.of(2024, 1, 1);
 
@@ -39,7 +39,7 @@ public class PurchaseServiceTest {
     }
 
     @Test
-    void getPurchasesByShopNumberAndCashNumberAndDate() {
+    void testGetPurchasesByShopNumberAndCashNumberAndDate() {
         Long shopNumber = 1L;
         Long cashNumber = 1L;
         LocalDate endDate = LocalDate.of(2024, 1, 1);

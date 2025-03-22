@@ -24,13 +24,11 @@ public class PositionServiceTest {
     private PositionRepository positionRepository;
 
     @Test
-    void getPositionByPurchaseId(){
+    void testGetPositionByPurchaseId() {
         Long purchaseId = 1L;
 
         List<Position> positions = positionService.getPositionsByPurchaseId(purchaseId);
 
         assertEquals(2, positions.size());
-
-
     }
 }

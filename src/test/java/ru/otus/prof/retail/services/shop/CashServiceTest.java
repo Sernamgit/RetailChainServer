@@ -34,7 +34,7 @@ public class CashServiceTest {
     private ShopService shopService;
 
     @Test
-    void createCash() {
+    void testCreateCash() {
         Optional<Shop> shopOpt = shopService.getShopByNumber(1L);
         assertTrue(shopOpt.isPresent());
         Shop shop = shopOpt.get();
@@ -56,7 +56,7 @@ public class CashServiceTest {
     }
 
     @Test
-    void getCashById() {
+    void testGetCashById() {
         Optional<Cash> cashOptional = cashService.getCashById(1L);
 
         assertTrue(cashOptional.isPresent());
@@ -67,7 +67,7 @@ public class CashServiceTest {
     }
 
     @Test
-    void getCashByNumberAndShopNumber() {
+    void testGetCashByNumberAndShopNumber() {
         Optional<Cash> cashOptional = cashService.getCashByNumberAndShopNumber(1L, 1L);
 
         assertTrue(cashOptional.isPresent());
@@ -78,7 +78,7 @@ public class CashServiceTest {
     }
 
     @Test
-    void getCashByShopNumber() {
+    void testGetCashByShopNumber() {
         List<Cash> cashList = cashService.getCashByShopNumber(1L);
 
         assertFalse(cashList.isEmpty());
@@ -92,7 +92,7 @@ public class CashServiceTest {
     @Test
     @Transactional
     @Rollback
-    void updateCash() {
+    void testUpdateCash() {
         Optional<Cash> cashOptional = cashService.getCashById(1L);
         assertTrue(cashOptional.isPresent());
 
@@ -106,7 +106,7 @@ public class CashServiceTest {
     @Test
     @Transactional
     @Rollback
-    void updateCashStatus() {
+    void testUpdateCashStatus() {
         cashService.updateCashStatus(1L, STATUS.DELETED);
 
         Optional<Cash> cashOptional = cashService.getCashById(1L);

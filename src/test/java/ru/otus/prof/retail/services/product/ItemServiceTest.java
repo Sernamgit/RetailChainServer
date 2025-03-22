@@ -25,9 +25,9 @@ public class ItemServiceTest {
     private ItemRepository itemRepository;
 
     @Test
-    void createItem() {
+    void testCreateItem() {
         Item newItem = new Item();
-        newItem.setArticle(1003L); // Устанавливаем article один раз
+        newItem.setArticle(1003L);
         newItem.setName("Item 3");
         newItem.setCreateDate(LocalDateTime.now());
         newItem.setUpdateDate(LocalDateTime.now());
