@@ -18,17 +18,20 @@ public class Shift {
     @Column(name = "shift_number", nullable = false)
     private Long shiftNumber;
 
+    @Column(name = "shop_number", nullable = false)
+    private Long shopNumber;
+
     @Column(name = "cash_number", nullable = false)
     private Long cashNumber;
 
-    @Column(name = "open_time", nullable = false)
+    @Column(name = "create_date", nullable = false)
     private LocalDateTime openTime;
 
-    @Column(name = "close_time")
+    @Column(name = "close_date")
     private LocalDateTime closeTime;
 
     @Column(name = "total")
-    private long total;
+    private Long total;
 
     @OneToMany(mappedBy = "shift", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Purchase> purchases;

@@ -12,6 +12,6 @@ public class Barcode {
     private String barcode;
 
     @ManyToOne
-    @JoinColumn(name = "article", nullable = false)
+    @JoinColumn(name = "article", nullable = false, insertable = false, updatable = false)
     private Item item;
 }

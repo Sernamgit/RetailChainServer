@@ -15,7 +15,7 @@ public class Position {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "purchase", nullable = false)
+    @JoinColumn(name = "purchase_id", nullable = false, insertable = false, updatable = false)
     private Purchase purchase;
 
     @Column(name = "barcode", nullable = false)

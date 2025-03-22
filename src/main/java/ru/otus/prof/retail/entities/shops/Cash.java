@@ -27,10 +27,19 @@ public class Cash {
     @Column(name = "create_date", nullable = false)
     private LocalDateTime createDate;
 
-    @Column(name = "update_time", nullable = false)
+    @Column(name = "update_date", nullable = false)
     private LocalDateTime updateDate;
 
     @ManyToOne
     @JoinColumn(name = "shop_number", nullable = false)
     private Shop shop;
+
+    @PrePersist
+    @PreUpdate
+    public void setTimestamps() {
+        if (createDate == null) {
+            createDate = LocalDateTime.now();
+        }
+        updateDate = LocalDateTime.now();
+    }
 }

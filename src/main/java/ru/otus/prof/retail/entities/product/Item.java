@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
@@ -24,8 +24,18 @@ public class Item {
     private LocalDateTime updateDate;
 
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Price> prices;
+    private Set<Price> prices;
 
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Barcode> barcodes;
+    private Set<Barcode> barcodes;
+
+    @PrePersist
+    @PreUpdate
+    public void setTimestamps() {
+        if (createDate == null) {
+            createDate = LocalDateTime.now();
+        }
+        updateDate = LocalDateTime.now();
+    }
+
 }
