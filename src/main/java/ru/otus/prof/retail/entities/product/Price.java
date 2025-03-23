@@ -18,6 +18,6 @@ public class Price {
     private Long price;
 
     @ManyToOne
-    @JoinColumn(name = "article", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name = "article", nullable = false)
     private Item item;
 }

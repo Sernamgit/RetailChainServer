@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -36,6 +37,19 @@ public class Item {
             createDate = LocalDateTime.now();
         }
         updateDate = LocalDateTime.now();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Item item = (Item) o;
+        return Objects.equals(article, item.article);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(article);
     }
 
 }

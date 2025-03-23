@@ -24,7 +24,7 @@ public class LiquibaseRunner {
         String jdbcUrl = "jdbc:postgresql://localhost:2345/retail";
         String username = "postgres";
         String password = "postgres";
-        String changelogFile = "db/changelog/db.changelog-master.yaml";
+        String changelogFile = "db.changelog/db.changelog-master.yaml";
 
         try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
             Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(

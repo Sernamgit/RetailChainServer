@@ -9,9 +9,9 @@ INSERT INTO cash (status, number, shop_number, create_date, update_date) VALUES
 ('DELETED', 2, 2, '2024-01-01 10:00:00', '2024-01-01 10:00:00');
 
 -- Item
-INSERT INTO items (article, name, create_date) VALUES
-(1001, 'Item 1', '2024-01-01 10:00:00'),
-(1002, 'Item 2', '2024-01-01 10:00:00');
+INSERT INTO items (article, name, create_date, update_time) VALUES
+(1001, 'Item 1', '2024-01-01 10:00:00', '2024-01-01 10:00:00'),
+(1002, 'Item 2', '2024-01-01 10:00:00', '2024-01-01 10:00:00');
 
 -- Price
 INSERT INTO price (article, price) VALUES

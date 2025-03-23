@@ -3,7 +3,7 @@ CREATE TABLE items (
     article BIGINT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     create_date TIMESTAMP NOT NULL,
-    update_time TIMESTAMP
+    update_time TIMESTAMP NOT NULL
 );
 
 -- Создание таблицы Price
