@@ -11,8 +11,6 @@ import ru.otus.prof.retail.entities.product.Item;
 @Repository
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
-
-
     @Modifying
     @Query("DELETE FROM Item i WHERE i.article = :article")
     void deleteByArticle(@Param("article") Long article);
