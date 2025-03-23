@@ -62,7 +62,7 @@ public class ShiftMapper {
                     .collect(Collectors.toSet());
             shift.setPurchases(purchases);
         } else {
-            shift.setPurchases(Collections.emptySet()); // Устанавливаем пустую коллекцию
+            shift.setPurchases(Collections.emptySet());
         }
 
         return shift;

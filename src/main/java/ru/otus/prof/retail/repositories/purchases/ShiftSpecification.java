@@ -8,13 +8,19 @@ import java.time.LocalDate;
 public class ShiftSpecification {
 
     public static Specification<Shift> byCloseDate(LocalDate closeDate) {
-        return ((root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(criteriaBuilder.function("CAST", LocalDate.class, root.get("closeTime")), closeDate));
+        return (root, query, criteriaBuilder) -> criteriaBuilder.between(
+                root.get("closeTime"),
+                closeDate.atStartOfDay(),
+                closeDate.plusDays(1).atStartOfDay()
+        );
     }
 
     public static Specification<Shift> byCloseDateRange(LocalDate startDate, LocalDate endDate) {
-        return ((root, query, criteriaBuilder) ->
-                criteriaBuilder.between(criteriaBuilder.function("CAST", LocalDate.class, root.get("closeTime")), startDate, endDate));
+        return (root, query, criteriaBuilder) -> criteriaBuilder.between(
+                root.get("closeTime"),
+                startDate.atStartOfDay(),
+                endDate.plusDays(1).atStartOfDay()
+        );
     }
 
     public static Specification<Shift> byShopNumber(Long shopNumber) {

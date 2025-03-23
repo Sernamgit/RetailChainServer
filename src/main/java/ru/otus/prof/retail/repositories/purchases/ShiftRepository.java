@@ -1,9 +1,9 @@
 package ru.otus.prof.retail.repositories.purchases;
 
+import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.otus.prof.retail.entities.purchases.Shift;
 
@@ -14,11 +14,16 @@ import java.util.List;
 @Repository
 public interface ShiftRepository extends JpaRepository<Shift, Long>, JpaSpecificationExecutor<Shift> {
 
-    @Query("SELECT DISTINCT s FROM Shift s LEFT JOIN FETCH s.purchases p LEFT JOIN FETCH p.positions")
-    List<Shift> findAllWithPositions(Specification<Shift> spec);
+    private List<Shift> findAllWithPositions(Specification<Shift> spec) {
+        return findAll((root, query, cb) -> {
+            root.fetch("purchases", JoinType.LEFT).fetch("positions", JoinType.LEFT);
+            return spec.toPredicate(root, query, cb);
+        });
+    }
 
-    @Query("SELECT s FROM Shift s")
-    List<Shift> findAllWithoutPositions(Specification<Shift> spec);
+    private List<Shift> findAllWithoutPositions(Specification<Shift> spec) {
+        return findAll(spec);
+    }
 
     default List<Shift> findShiftByCloseDate(LocalDate closeDate, boolean withPositions) {
         Specification<Shift> spec = ShiftSpecification.byCloseDate(closeDate);
@@ -26,8 +31,8 @@ public interface ShiftRepository extends JpaRepository<Shift, Long>, JpaSpecific
     }
 
     default List<Shift> findShiftsByShopNumberAndCloseDate(Long shopNumber, LocalDate closeDate, boolean withPositions) {
-        Specification<Shift> spec = ShiftSpecification.byShopNumber(shopNumber)
-                .and(ShiftSpecification.byCloseDate(closeDate));
+        Specification<Shift> spec = ShiftSpecification.byCloseDate(closeDate)
+                .and(ShiftSpecification.byShopNumber(shopNumber));
         return withPositions ? findAllWithPositions(spec) : findAllWithoutPositions(spec);
     }
 
