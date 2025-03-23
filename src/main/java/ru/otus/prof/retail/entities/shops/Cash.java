@@ -2,7 +2,9 @@ package ru.otus.prof.retail.entities.shops;
 
 import jakarta.persistence.*;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import ru.otus.prof.retail.STATUS;
 
 import java.time.LocalDateTime;
@@ -10,6 +12,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "cash")
 public class Cash {
     @Id

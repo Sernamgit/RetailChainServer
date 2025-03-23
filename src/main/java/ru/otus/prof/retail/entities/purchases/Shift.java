@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Data
@@ -34,6 +35,6 @@ public class Shift {
     private Long total;
 
     @OneToMany(mappedBy = "shift", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Purchase> purchases;
+    private Set<Purchase> purchases = new HashSet<>();
 
 }

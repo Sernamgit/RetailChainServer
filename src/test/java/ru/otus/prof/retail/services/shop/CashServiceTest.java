@@ -7,9 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import ru.otus.prof.retail.STATUS;
-import ru.otus.prof.retail.entities.shops.Cash;
-import ru.otus.prof.retail.entities.shops.Shop;
-import ru.otus.prof.retail.repositories.shops.CashRepository;
+import ru.otus.prof.retail.dto.shop.CashDTO;
+import ru.otus.prof.retail.dto.shop.ShopDTO;
 import ru.otus.prof.retail.services.shops.CashService;
 import ru.otus.prof.retail.services.shops.ShopService;
 
@@ -25,82 +24,76 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CashServiceTest {
 
     @Autowired
-    private CashRepository cashRepository;
-
-    @Autowired
     private CashService cashService;
 
     @Autowired
     private ShopService shopService;
 
+
     @Test
+    @Transactional
     void testCreateCash() {
-        Optional<Shop> shopOpt = shopService.getShopByNumber(1L);
-        assertTrue(shopOpt.isPresent());
-        Shop shop = shopOpt.get();
+        Optional<ShopDTO> shopOptDTO = shopService.getShopByNumber(1L);
+        assertTrue(shopOptDTO.isPresent());
+        ShopDTO shopDTO = shopOptDTO.get();
 
+        CashDTO cashDTO = new CashDTO(null, STATUS.ACTIVE, 3L, LocalDateTime.now(), LocalDateTime.now(), shopDTO.number());
 
-        Cash cash = new Cash();
-        cash.setNumber(3L);
-        cash.setShop(shop);
-        cash.setStatus(STATUS.ACTIVE);
-        cash.setCreateDate(LocalDateTime.now());
-        cash.setUpdateDate(LocalDateTime.now());
+        CashDTO savedCashDTO = cashService.createCash(cashDTO);
 
-        Cash savedCash = cashService.createCash(cash);
-
-        assertNotNull(savedCash.getId());
-        assertEquals(3L, savedCash.getNumber());
-        assertEquals(shop, savedCash.getShop());
-        assertEquals(STATUS.ACTIVE, savedCash.getStatus());
+        assertNotNull(savedCashDTO.id());
+        assertEquals(3L, savedCashDTO.number());
+        assertEquals(shopDTO.number(), savedCashDTO.shopNumber());
+        assertEquals(STATUS.ACTIVE, savedCashDTO.status());
     }
 
     @Test
     void testGetCashById() {
-        Optional<Cash> cashOptional = cashService.getCashById(1L);
+        Optional<CashDTO> cashOptDTO = cashService.getCashById(1L);
 
-        assertTrue(cashOptional.isPresent());
-        Cash cash = cashOptional.get();
-        assertEquals(1L, cash.getNumber());
-        assertEquals(1L, cash.getShop().getNumber());
-        assertEquals(STATUS.ACTIVE, cash.getStatus());
+        assertTrue(cashOptDTO.isPresent());
+        CashDTO cashDTO = cashOptDTO.get();
+        assertEquals(1L, cashDTO.number());
+        assertEquals(1L, cashDTO.shopNumber());
+        assertEquals(STATUS.ACTIVE, cashDTO.status());
     }
 
     @Test
     void testGetCashByNumberAndShopNumber() {
-        Optional<Cash> cashOptional = cashService.getCashByNumberAndShopNumber(1L, 1L);
+        Optional<CashDTO> cashOptDTO = cashService.getCashByNumberAndShopNumber(1L, 1L);
 
-        assertTrue(cashOptional.isPresent());
-        Cash cash = cashOptional.get();
-        assertEquals(1L, cash.getNumber());
-        assertEquals(1L, cash.getShop().getNumber());
-        assertEquals(STATUS.ACTIVE, cash.getStatus());
+        assertTrue(cashOptDTO.isPresent());
+        CashDTO cashDTO = cashOptDTO.get();
+        assertEquals(1L, cashDTO.number());
+        assertEquals(1L, cashDTO.shopNumber());
+        assertEquals(STATUS.ACTIVE, cashDTO.status());
     }
 
     @Test
     void testGetCashByShopNumber() {
-        List<Cash> cashList = cashService.getCashByShopNumber(1L);
+        List<CashDTO> cashDTOList = cashService.getCashByShopNumber(1L);
 
-        assertFalse(cashList.isEmpty());
-        assertEquals(1, cashList.size());
-        Cash cash = cashList.get(0);
-        assertEquals(1L, cash.getNumber());
-        assertEquals(1L, cash.getShop().getNumber());
-        assertEquals(STATUS.ACTIVE, cash.getStatus());
+        assertFalse(cashDTOList.isEmpty());
+        assertEquals(1, cashDTOList.size());
+        CashDTO cashDTO = cashDTOList.get(0);
+        assertEquals(1L, cashDTO.number());
+        assertEquals(1L, cashDTO.shopNumber());
+        assertEquals(STATUS.ACTIVE, cashDTO.status());
     }
 
     @Test
     @Transactional
     @Rollback
     void testUpdateCash() {
-        Optional<Cash> cashOptional = cashService.getCashById(1L);
-        assertTrue(cashOptional.isPresent());
+        Optional<CashDTO> cashOptDTO = cashService.getCashById(1L);
+        assertTrue(cashOptDTO.isPresent());
 
-        Cash cash = cashOptional.get();
-        cash.setStatus(STATUS.DELETED);
-        Cash updatedCash = cashService.updateCash(cash);
+        CashDTO cashDTO = cashOptDTO.get();
+        CashDTO updatedCashDTO = new CashDTO(cashDTO.id(), STATUS.DELETED, cashDTO.number(), cashDTO.createDate(), cashDTO.updateDate(), cashDTO.shopNumber());
 
-        assertEquals(STATUS.DELETED, updatedCash.getStatus());
+        CashDTO resultCashDTO = cashService.updateCash(updatedCashDTO);
+
+        assertEquals(STATUS.DELETED, resultCashDTO.status());
     }
 
     @Test
@@ -109,8 +102,8 @@ public class CashServiceTest {
     void testUpdateCashStatus() {
         cashService.updateCashStatus(1L, STATUS.DELETED);
 
-        Optional<Cash> cashOptional = cashService.getCashById(1L);
-        assertTrue(cashOptional.isPresent());
-        assertEquals(STATUS.DELETED, cashOptional.get().getStatus());
+        Optional<CashDTO> cashOptDTO = cashService.getCashById(1L);
+        assertTrue(cashOptDTO.isPresent());
+        assertEquals(STATUS.DELETED, cashOptDTO.get().status());
     }
 }

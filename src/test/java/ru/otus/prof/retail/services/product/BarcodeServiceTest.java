@@ -8,9 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
-import ru.otus.prof.retail.entities.product.Barcode;
+import ru.otus.prof.retail.dto.product.BarcodeDTO;
 import ru.otus.prof.retail.entities.product.Item;
+import ru.otus.prof.retail.mappers.product.BarcodeMapper;
 import ru.otus.prof.retail.repositories.product.BarcodeRepository;
+import ru.otus.prof.retail.repositories.product.ItemRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,13 +31,19 @@ public class BarcodeServiceTest {
     private BarcodeService barcodeService;
 
     @Autowired
+    private ItemRepository itemRepository;
+
+    @Autowired
     private ItemService itemService;
+
+    @Autowired
+    private BarcodeMapper barcodeMapper;
 
     private Item item;
 
     @BeforeEach
-    void setUp(){
-        Optional<Item> itemOpt = itemService.getItem(1001L);
+    void setUp() {
+        Optional<Item> itemOpt = itemRepository.findById(1001L);
         assertTrue(itemOpt.isPresent());
         item = itemOpt.get();
     }
@@ -44,53 +52,44 @@ public class BarcodeServiceTest {
     @Transactional
     @Rollback
     void testCreateBarcode() {
-        Barcode newBarcode = new Barcode();
-        newBarcode.setBarcode("5555555555555");
-        newBarcode.setItem(item);
+        BarcodeDTO newBarcodeDTO = new BarcodeDTO("5555555555555", item.getArticle());
 
-        Barcode savedBarcode = barcodeService.createBarcode(newBarcode);
+        BarcodeDTO savedBarcodeDTO = barcodeService.createBarcode(newBarcodeDTO);
 
-        assertThat(savedBarcode).isNotNull();
-        assertThat(savedBarcode.getBarcode()).isEqualTo("5555555555555");
-        assertThat(savedBarcode.getItem().getArticle()).isEqualTo(1001L);
+        assertThat(savedBarcodeDTO).isNotNull();
+        assertThat(savedBarcodeDTO.barcode()).isEqualTo("5555555555555");
+        assertThat(savedBarcodeDTO.article()).isEqualTo(1001L);
     }
 
     @Test
     @Transactional
     @Rollback
     void testCreateBarcodes() {
-        Barcode barcode1 = new Barcode();
-        barcode1.setBarcode("3333333333333");
-        barcode1.setItem(item);
+        BarcodeDTO barcodeDTO1 = new BarcodeDTO("3333333333333", item.getArticle());
+        BarcodeDTO barcodeDTO2 = new BarcodeDTO("4444444444444", item.getArticle());
 
-        Barcode barcode2 = new Barcode();
-        barcode2.setBarcode("4444444444444");
-        barcode2.setItem(item);
+        List<BarcodeDTO> savedBarcodeDTOs = barcodeService.createBarcodes(List.of(barcodeDTO1, barcodeDTO2));
 
-        List<Barcode> savedBarcodes = barcodeService.createBarcodes(List.of(barcode1, barcode2));
-
-        assertThat(savedBarcodes).hasSize(2);
-        assertThat(savedBarcodes.get(0).getBarcode()).isEqualTo("3333333333333");
-        assertThat(savedBarcodes.get(1).getBarcode()).isEqualTo("4444444444444");
+        assertThat(savedBarcodeDTOs).hasSize(2);
+        assertThat(savedBarcodeDTOs.get(0).barcode()).isEqualTo("3333333333333");
+        assertThat(savedBarcodeDTOs.get(1).barcode()).isEqualTo("4444444444444");
     }
 
     @Test
     @Transactional
     @Rollback
     void testDeleteBarcode() {
-        Barcode newBarcode = new Barcode();
-        newBarcode.setBarcode("6666666666666");
-        newBarcode.setItem(item);
-        barcodeService.createBarcode(newBarcode);
+        BarcodeDTO newBarcodeDTO = new BarcodeDTO("6666666666666", item.getArticle());
+        barcodeService.createBarcode(newBarcodeDTO);
 
-        List<Barcode> barcodesBeforeDeletion = barcodeService.getBarcodesByItemArticle(1001L);
+        List<BarcodeDTO> barcodesBeforeDeletion = barcodeService.getBarcodesByItemArticle(1001L);
         assertThat(barcodesBeforeDeletion).hasSize(3);
 
         barcodeService.deleteBarcode("6666666666666");
 
-        List<Barcode> barcodesAfterDeletion = barcodeService.getBarcodesByItemArticle(1001L);
+        List<BarcodeDTO> barcodesAfterDeletion = barcodeService.getBarcodesByItemArticle(1001L);
         assertThat(barcodesAfterDeletion).hasSize(2);
-        assertThat(barcodesAfterDeletion).noneMatch(barcode -> barcode.getBarcode().equals("6666666666666"));
+        assertThat(barcodesAfterDeletion).noneMatch(barcode -> barcode.barcode().equals("6666666666666"));
     }
 
     @Test
@@ -99,7 +98,7 @@ public class BarcodeServiceTest {
     void testDeleteAllBarcodesByItemArticle() {
         barcodeService.deleteAllBarcodesByItemArticle(1001L);
 
-        List<Barcode> barcodes = barcodeService.getBarcodesByItemArticle(1001L);
+        List<BarcodeDTO> barcodes = barcodeService.getBarcodesByItemArticle(1001L);
         assertThat(barcodes).isEmpty();
     }
 
@@ -107,11 +106,11 @@ public class BarcodeServiceTest {
     @Transactional
     @Rollback
     void testGetBarcodesByItemArticle() {
-        List<Barcode> barcodes = barcodeService.getBarcodesByItemArticle(1001L);
+        List<BarcodeDTO> barcodes = barcodeService.getBarcodesByItemArticle(1001L);
 
         assertThat(barcodes).hasSize(2);
-        assertThat(barcodes.get(0).getBarcode()).isEqualTo("1001111111111");
-        assertThat(barcodes.get(1).getBarcode()).isEqualTo("1001111111112");
+        assertThat(barcodes.get(0).barcode()).isEqualTo("1001111111111");
+        assertThat(barcodes.get(1).barcode()).isEqualTo("1001111111112");
     }
 
 }

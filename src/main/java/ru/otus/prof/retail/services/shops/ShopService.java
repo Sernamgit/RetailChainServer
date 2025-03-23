@@ -3,8 +3,10 @@ package ru.otus.prof.retail.services.shops;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.otus.prof.retail.dto.shop.ShopDTO;
 import ru.otus.prof.retail.entities.shops.Cash;
 import ru.otus.prof.retail.entities.shops.Shop;
+import ru.otus.prof.retail.mappers.shop.ShopMapper;
 import ru.otus.prof.retail.repositories.shops.CashRepository;
 import ru.otus.prof.retail.repositories.shops.ShopRepository;
 
@@ -20,26 +22,28 @@ public class ShopService {
     @Autowired
     private CashRepository cashRepository;
 
+    @Autowired
+    private ShopMapper shopMapper;
+
     // Создание магазина (все поля обязательны, кроме касс)
     @Transactional
-    public Shop createShop(Shop shop) {
-        return shopRepository.save(shop);
+    public ShopDTO createShop(ShopDTO shopDTO) {
+        return shopMapper.toDTO(shopRepository.save(shopMapper.toEntity(shopDTO)));
     }
 
     //получение магазина по номеру без касс
-    public Optional<Shop> getShopByNumber(Long number) {
-        return shopRepository.findByNumber(number);
+    public Optional<ShopDTO> getShopByNumber(Long number) {
+        return shopRepository.findByNumber(number).map(shopMapper::toDTO);
     }
 
     //получение магазина по номеру с кассами
-    public Optional<Shop> getShopByNumberWithCash(Long number) {
-        return shopRepository.findByNumberWitchCash(number);
+    public Optional<ShopDTO> getShopByNumberWithCash(Long number) {
+        return shopRepository.findByNumberWitchCash(number).map(shopMapper::toDTO);
     }
 
-    //Обновление магазина без касс
     @Transactional
-    public Shop updateShop(Shop shop) {
-        return shopRepository.save(shop);
+    public ShopDTO updateShop(ShopDTO shopDTO) {
+        return shopMapper.toDTO(shopRepository.save(shopMapper.toEntity(shopDTO)));
     }
 
     @Transactional

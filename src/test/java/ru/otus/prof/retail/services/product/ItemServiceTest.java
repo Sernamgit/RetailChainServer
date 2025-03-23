@@ -6,10 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
-import ru.otus.prof.retail.entities.product.Item;
+import ru.otus.prof.retail.dto.product.ItemDTO;
+import ru.otus.prof.retail.mappers.product.ItemMapper;
 import ru.otus.prof.retail.repositories.product.ItemRepository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,47 +26,46 @@ public class ItemServiceTest {
     @Autowired
     private ItemRepository itemRepository;
 
+    @Autowired
+    private ItemMapper itemMapper;
+
     @Test
     void testCreateItem() {
-        Item newItem = new Item();
-        newItem.setArticle(1003L);
-        newItem.setName("Item 3");
-        newItem.setCreateDate(LocalDateTime.now());
-        newItem.setUpdateDate(LocalDateTime.now());
+        ItemDTO newItemDTO = new ItemDTO(1003L, "Item 3", LocalDateTime.now(), LocalDateTime.now(),  Collections.emptySet(),  Collections.emptySet());
 
-        Item createdItem = itemService.createitem(newItem);
+        ItemDTO createdItemDTO = itemService.createItem(newItemDTO);
 
-        assertNotNull(createdItem);
-        assertEquals(1003L, createdItem.getArticle());
-        assertEquals("Item 3", createdItem.getName());
+        assertNotNull(createdItemDTO);
+        assertEquals(1003L, createdItemDTO.article());
+        assertEquals("Item 3", createdItemDTO.name());
     }
 
     @Test
     @Transactional
     @Rollback
     void testUpdateItem() {
-        Optional<Item> itemOptional = itemService.getItem(1001L);
-        assertTrue(itemOptional.isPresent());
+        Optional<ItemDTO> itemDTOOptional = itemService.getItem(1001L);
+        assertTrue(itemDTOOptional.isPresent());
 
-        Item item = itemOptional.get();
-        item.setName("Updated Item 1");
+        ItemDTO itemDTO = itemDTOOptional.get();
+        ItemDTO updatedItemDTO = new ItemDTO(itemDTO.article(), "Updated Item 1", itemDTO.createDate(), itemDTO.updateDate(), itemDTO.prices(), itemDTO.barcodes());
 
-        Item updatedItem = itemService.updateItem(item);
+        ItemDTO resultItemDTO = itemService.updateItem(updatedItemDTO);
 
-        assertNotNull(updatedItem);
-        assertEquals("Updated Item 1", updatedItem.getName());
+        assertNotNull(resultItemDTO);
+        assertEquals("Updated Item 1", resultItemDTO.name());
     }
 
     @Test
     @Transactional
     @Rollback
     void testDeleteItem() {
-        Optional<Item> itemBeforeDeletion = itemService.getItem(1001L);
+        Optional<ItemDTO> itemBeforeDeletion = itemService.getItem(1001L);
         assertTrue(itemBeforeDeletion.isPresent());
 
         itemService.deleteItem(1001L);
 
-        Optional<Item> deletedItem = itemService.getItem(1001L);
+        Optional<ItemDTO> deletedItem = itemService.getItem(1001L);
         assertFalse(deletedItem.isPresent());
     }
 }

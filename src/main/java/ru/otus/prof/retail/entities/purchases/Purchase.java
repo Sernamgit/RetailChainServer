@@ -16,7 +16,7 @@ public class Purchase {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "shift_id", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name = "shift_id", nullable = false)
     private Shift shift;
 
     @Column(name = "purchase_date", nullable = false)

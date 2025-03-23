@@ -2,13 +2,16 @@ package ru.otus.prof.retail.services.product;
 
 
 import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
+import ru.otus.prof.retail.dto.product.PriceDTO;
 import ru.otus.prof.retail.entities.product.Item;
-import ru.otus.prof.retail.entities.product.Price;
+import ru.otus.prof.retail.mappers.product.PriceMapper;
+import ru.otus.prof.retail.repositories.product.ItemRepository;
 import ru.otus.prof.retail.repositories.product.PriceRepository;
 
 import java.util.List;
@@ -27,89 +30,70 @@ public class PriceServiceTest {
     private PriceService priceService;
 
     @Autowired
-    ItemService itemService;
+    private ItemRepository itemRepository;
+
+    @Autowired
+    private PriceMapper priceMapper;
+
+    private Item item;
+
+    @BeforeEach
+    void setUp() {
+        Optional<Item> itemOpt = itemRepository.findById(1001L);
+        assertTrue(itemOpt.isPresent());
+        item = itemOpt.get();
+    }
 
     @Test
     @Transactional
     @Rollback
     void testCreatePrice() {
-        Optional<Item> itemOpt = itemService.getItem(1001L);
-        assertTrue(itemOpt.isPresent());
+        PriceDTO priceDTO = new PriceDTO(null, 333L, item.getArticle());
 
-        Item item = itemOpt.get();
+        PriceDTO createdPriceDTO = priceService.createPrice(priceDTO);
 
-        Price price = new Price();
-        price.setPrice(333L);
-        price.setItem(item);
-
-        Price createdPrice = priceService.createPrice(price);
-
-        assertNotNull(createdPrice.getId());
-        assertEquals(333L, createdPrice.getPrice());
+        assertNotNull(createdPriceDTO.id());
+        assertEquals(333L, createdPriceDTO.price());
     }
 
     @Test
     @Transactional
     @Rollback
     void testCreatePrices() {
-        Optional<Item> itemOpt = itemService.getItem(1001L);
-        assertTrue(itemOpt.isPresent());
+        PriceDTO priceDTO1 = new PriceDTO(null, 150L, item.getArticle());
+        PriceDTO priceDTO2 = new PriceDTO(null, 250L, item.getArticle());
 
-        Item item = itemOpt.get();
+        List<PriceDTO> createdPriceDTOs = priceService.createPrices(List.of(priceDTO1, priceDTO2));
 
-        Price price1 = new Price();
-        price1.setPrice(150L);
-        price1.setItem(item);
-
-        Price price2 = new Price();
-        price2.setPrice(250L);
-        price2.setItem(item);
-
-        List<Price> createdPrices = priceService.createPrices(List.of(price1, price2));
-
-        assertEquals(2, createdPrices.size());
-        assertNotNull(createdPrices.get(0).getId());
-        assertNotNull(createdPrices.get(1).getId());
+        assertEquals(2, createdPriceDTOs.size());
+        assertNotNull(createdPriceDTOs.get(0).id());
+        assertNotNull(createdPriceDTOs.get(1).id());
     }
 
     @Test
     @Transactional
     @Rollback
     void testUpdatePrice() {
-        Optional<Item> itemOpt = itemService.getItem(1001L);
-        assertTrue(itemOpt.isPresent());
+        PriceDTO priceDTO = new PriceDTO(null, 150L, item.getArticle());
 
-        Item item = itemOpt.get();
+        PriceDTO createdPriceDTO = priceService.createPrice(priceDTO);
+        PriceDTO updatedPriceDTO = new PriceDTO(createdPriceDTO.id(), 200L, item.getArticle());
 
-        Price price = new Price();
-        price.setPrice(150L);
-        price.setItem(item);
+        PriceDTO resultPriceDTO = priceService.updatePrice(updatedPriceDTO);
 
-        Price createdPrice = priceService.createPrice(price);
-        createdPrice.setPrice(200L);
-
-        Price updatedPrice = priceService.updatePrice(createdPrice);
-
-        assertEquals(200L, updatedPrice.getPrice());
+        assertEquals(200L, resultPriceDTO.price());
     }
 
     @Test
     @Transactional
     @Rollback
     void testDeletePrice() {
-        Optional<Item> itemOpt = itemService.getItem(1001L);
-        assertTrue(itemOpt.isPresent());
+        PriceDTO priceDTO = new PriceDTO(null, 150L, item.getArticle());
 
-        Item item = itemOpt.get();
+        PriceDTO createdPriceDTO = priceService.createPrice(priceDTO);
+        priceService.deletePrice(createdPriceDTO.id());
 
-        Price price = new Price();
-        price.setPrice(150L);
-        price.setItem(item);
-
-        Price createdPrice = priceService.createPrice(price);
-        priceService.deletePrice(createdPrice.getId());
-
-        assertFalse(priceRepository.findById(createdPrice.getId()).isPresent());
+        assertFalse(priceRepository.findById(createdPriceDTO.id()).isPresent());
     }
 
     @Test
@@ -118,18 +102,18 @@ public class PriceServiceTest {
     void testDeleteAllPricesByItemArticle() {
         priceService.deleteAllPricesByItemArticle(1001L);
 
-        List<Price> prices = priceService.getPricesByItemArticle(1001L);
+        List<PriceDTO> prices = priceService.getPricesByItemArticle(1001L);
         assertTrue(prices.isEmpty());
     }
 
     @Test
     void testGetPricesByItemArticle() {
-        List<Price> prices = priceService.getPricesByItemArticle(1001L);
+        List<PriceDTO> prices = priceService.getPricesByItemArticle(1001L);
 
         assertEquals(3, prices.size());
-        assertEquals(100L, prices.get(0).getPrice());
-        assertEquals(101L, prices.get(1).getPrice());
-        assertEquals(103L, prices.get(2).getPrice());
+        assertEquals(100L, prices.get(0).price());
+        assertEquals(101L, prices.get(1).price());
+        assertEquals(103L, prices.get(2).price());
     }
 
 

@@ -3,7 +3,9 @@ package ru.otus.prof.retail.services.product;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.otus.prof.retail.dto.product.ItemDTO;
 import ru.otus.prof.retail.entities.product.Item;
+import ru.otus.prof.retail.mappers.product.ItemMapper;
 import ru.otus.prof.retail.repositories.product.ItemRepository;
 
 import java.util.Optional;
@@ -14,19 +16,22 @@ public class ItemService {
     @Autowired
     private ItemRepository itemRepository;
 
+    @Autowired
+    private ItemMapper itemMapper;
+
     @Transactional
-    public Item createitem(Item item) {
-        return itemRepository.save(item);
+    public ItemDTO createItem(ItemDTO  itemDTO) {
+        return itemMapper.toDTO(itemRepository.save(itemMapper.toEntity(itemDTO)));
     }
 
     @Transactional
-    public Optional<Item> getItem(Long article) {
-        return itemRepository.findById(article);
+    public Optional<ItemDTO> getItem(Long article) {
+        return itemRepository.findById(article).map(itemMapper::toDTO);
     }
 
     @Transactional
-    public Item updateItem(Item item) {
-        return itemRepository.save(item);
+    public ItemDTO updateItem(ItemDTO itemDTO) {
+        return itemMapper.toDTO(itemRepository.save(itemMapper.toEntity(itemDTO)));
     }
 
     @Transactional

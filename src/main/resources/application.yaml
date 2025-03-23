@@ -1,4 +1,8 @@
+server:
+  port: 9999
 spring:
+  application:
+    name: RetailChainServer
   datasource:
     url: jdbc:postgresql://localhost:2345/retail
     username: postgres

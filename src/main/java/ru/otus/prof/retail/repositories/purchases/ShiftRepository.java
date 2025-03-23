@@ -1,7 +1,6 @@
 package ru.otus.prof.retail.repositories.purchases;
 
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -15,8 +14,7 @@ import java.util.List;
 @Repository
 public interface ShiftRepository extends JpaRepository<Shift, Long>, JpaSpecificationExecutor<Shift> {
 
-    @EntityGraph(attributePaths = {"purchases", "purchases.positions"}, type = EntityGraph.EntityGraphType.LOAD)
-    @Query("SELECT s FROM Shift s")
+    @Query("SELECT DISTINCT s FROM Shift s LEFT JOIN FETCH s.purchases p LEFT JOIN FETCH p.positions")
     List<Shift> findAllWithPositions(Specification<Shift> spec);
 
     @Query("SELECT s FROM Shift s")
@@ -33,7 +31,7 @@ public interface ShiftRepository extends JpaRepository<Shift, Long>, JpaSpecific
         return withPositions ? findAllWithPositions(spec) : findAllWithoutPositions(spec);
     }
 
-    default List<Shift> findShiftsByShopNumberAndCashNumberAndCloseDate(Long shopNumber, Long cashNumber, LocalDate closeDate, boolean withPositions){
+    default List<Shift> findShiftsByShopNumberAndCashNumberAndCloseDate(Long shopNumber, Long cashNumber, LocalDate closeDate, boolean withPositions) {
         Specification<Shift> spec = ShiftSpecification.byShopNumber(shopNumber)
                 .and(ShiftSpecification.byCashNumber(cashNumber))
                 .and(ShiftSpecification.byCloseDate(closeDate));
@@ -51,7 +49,7 @@ public interface ShiftRepository extends JpaRepository<Shift, Long>, JpaSpecific
         return withPositions ? findAllWithPositions(spec) : findAllWithoutPositions(spec);
     }
 
-    default List<Shift> findShiftsByShopNumberAndCashNumberAndCloseDateRange(Long shopNumber, Long cashNumber, LocalDate startDate, LocalDate endDate, boolean withPositions){
+    default List<Shift> findShiftsByShopNumberAndCashNumberAndCloseDateRange(Long shopNumber, Long cashNumber, LocalDate startDate, LocalDate endDate, boolean withPositions) {
         Specification<Shift> spec = ShiftSpecification.byShopNumber(shopNumber)
                 .and(ShiftSpecification.byCashNumber(cashNumber))
                 .and(ShiftSpecification.byCloseDateRange(startDate, endDate));
