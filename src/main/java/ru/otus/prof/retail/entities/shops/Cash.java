@@ -35,7 +35,7 @@ public class Cash {
     private LocalDateTime updateDate;
 
     @ManyToOne
-    @JoinColumn(name = "shop_number", nullable = false)
+    @JoinColumn(name = "shop_number", referencedColumnName = "number", nullable = false)
     private Shop shop;
 
     @PrePersist
@@ -45,5 +45,17 @@ public class Cash {
             createDate = LocalDateTime.now();
         }
         updateDate = LocalDateTime.now();
+    }
+
+    @Override
+    public String toString() {
+        return "Cash{" +
+                "id=" + id +
+                ", status=" + status +
+                ", number=" + number +
+                ", createDate=" + createDate +
+                ", updateDate=" + updateDate +
+                ", shop=" + (shop != null ? shop.getId() : "null") + // Только ID магазина
+                '}';
     }
 }

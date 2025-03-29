@@ -27,4 +27,16 @@ public class Shop {
 
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Cash> cashList;
+
+    @Override
+    public String toString() {
+        return "Shop{" +
+                "id=" + id +
+                ", number=" + number +
+                ", name='" + name + '\'' +
+                ", address='" + address + '\'' +
+                ", cashList=" + (cashList != null ? cashList.size() + " items" : "null") +
+                '}';
+    }
+
 }

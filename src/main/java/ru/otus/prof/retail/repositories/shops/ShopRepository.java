@@ -12,6 +12,9 @@ import java.util.Optional;
 @Repository
 public interface ShopRepository extends JpaRepository<Shop, Long> {
 
+    @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.cashList WHERE s.id = :id")
+    Optional<Shop> findByIdWithCash(@Param("id") Long id);
+
     //поиск по номеру магазина
     Optional<Shop> findByNumber(Long number);
 
@@ -19,7 +22,6 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
     @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.cashList WHERE s.number = :number")
     Optional<Shop> findByNumberWitchCash(@Param("number") Long number);
 
-    //TODO лучше по номеру магазина?
     @Modifying
     @Query("DELETE FROM Shop s WHERE s.id = :id")
     void deleteShopById(@Param("id") Long id);
