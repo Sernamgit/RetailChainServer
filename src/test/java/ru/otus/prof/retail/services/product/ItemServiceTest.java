@@ -6,11 +6,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
+import ru.otus.prof.retail.dto.product.CreateItemDTO;
 import ru.otus.prof.retail.dto.product.ItemDTO;
+import ru.otus.prof.retail.dto.product.UpdateItemDTO;
+import ru.otus.prof.retail.exception.ItemNotFoundException;
+import ru.otus.prof.retail.exception.ItemValidationException;
 import ru.otus.prof.retail.mappers.product.ItemMapper;
 import ru.otus.prof.retail.repositories.product.ItemRepository;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -31,29 +34,65 @@ public class ItemServiceTest {
 
     @Test
     void testCreateItem() {
-        ItemDTO newItemDTO = new ItemDTO(1003L, "Item 3", LocalDateTime.now(), LocalDateTime.now(),  Collections.emptySet(),  Collections.emptySet());
+        CreateItemDTO newItemDTO = new CreateItemDTO(
+                1003L, "Item 3", Collections.emptySet(), Collections.emptySet());
 
         ItemDTO createdItemDTO = itemService.createItem(newItemDTO);
 
         assertNotNull(createdItemDTO);
         assertEquals(1003L, createdItemDTO.article());
         assertEquals("Item 3", createdItemDTO.name());
+        assertTrue(createdItemDTO.barcodes().isEmpty());
+        assertTrue(createdItemDTO.prices().isEmpty());
+    }
+
+    @Test
+    void testCreateItemWithDuplicateArticle_ShouldThrowException() {
+        CreateItemDTO duplicateItemDTO = new CreateItemDTO(
+                1001L, "Duplicate Item",  Collections.emptySet(), Collections.emptySet());
+
+        assertThrows(ItemValidationException.class, () -> itemService.createItem(duplicateItemDTO));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void testGetItem() {
+        Optional<ItemDTO> itemDTO = itemService.getItem(1001L);
+
+        assertTrue(itemDTO.isPresent());
+        assertEquals(1001L, itemDTO.get().article());
+        assertEquals("Item 1", itemDTO.get().name());
+        assertEquals(3, itemDTO.get().prices().size());
+        assertEquals(2, itemDTO.get().barcodes().size());
+    }
+
+    @Test
+    void testGetNonExistentItem_ShouldReturnEmpty() {
+        Optional<ItemDTO> itemDTO = itemService.getItem(9999L);
+        assertFalse(itemDTO.isPresent());
     }
 
     @Test
     @Transactional
     @Rollback
     void testUpdateItem() {
-        Optional<ItemDTO> itemDTOOptional = itemService.getItem(1001L);
-        assertTrue(itemDTOOptional.isPresent());
+        UpdateItemDTO updateItemDTO = new UpdateItemDTO(1001L, "Updated Item 1", null, null);
 
-        ItemDTO itemDTO = itemDTOOptional.get();
-        ItemDTO updatedItemDTO = new ItemDTO(itemDTO.article(), "Updated Item 1", itemDTO.createDate(), itemDTO.updateDate(), itemDTO.prices(), itemDTO.barcodes());
-
-        ItemDTO resultItemDTO = itemService.updateItem(updatedItemDTO);
+        ItemDTO resultItemDTO = itemService.updateItem(updateItemDTO);
 
         assertNotNull(resultItemDTO);
         assertEquals("Updated Item 1", resultItemDTO.name());
+        assertEquals(1001L, resultItemDTO.article());
+        assertNotNull(resultItemDTO.createDate());
+        assertNotNull(resultItemDTO.updateDate());
+    }
+
+    @Test
+    void testUpdateNonExistentItem_ShouldThrowException() {
+        UpdateItemDTO updateItemDTO = new UpdateItemDTO(9999L, "Non-existent Item", null, null);
+
+        assertThrows(ItemNotFoundException.class, () -> itemService.updateItem(updateItemDTO));
     }
 
     @Test
@@ -67,5 +106,10 @@ public class ItemServiceTest {
 
         Optional<ItemDTO> deletedItem = itemService.getItem(1001L);
         assertFalse(deletedItem.isPresent());
+    }
+
+    @Test
+    void testDeleteNonExistentItem_ShouldThrowException() {
+        assertThrows(ItemNotFoundException.class, () -> itemService.deleteItem(9999L));
     }
 }

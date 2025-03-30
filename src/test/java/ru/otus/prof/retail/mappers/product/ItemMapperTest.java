@@ -6,14 +6,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.otus.prof.retail.dto.product.BarcodeDTO;
-import ru.otus.prof.retail.dto.product.ItemDTO;
-import ru.otus.prof.retail.dto.product.PriceDTO;
+import ru.otus.prof.retail.dto.product.*;
 import ru.otus.prof.retail.entities.product.Barcode;
 import ru.otus.prof.retail.entities.product.Item;
 import ru.otus.prof.retail.entities.product.Price;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -70,7 +69,7 @@ class ItemMapperTest {
     }
 
     @Test
-    void testToEntity() {
+    void testToEntityFromItemDTO() {
         ItemDTO itemDTO = new ItemDTO(123L, "Test Item", createdTime, updatedTime,
                 Set.of(new PriceDTO(1L, 100L, 123L)), Set.of(new BarcodeDTO("123456789", 123L)));
 
@@ -87,5 +86,59 @@ class ItemMapperTest {
 
         verify(barcodeMapper, times(1)).toEntity(any(BarcodeDTO.class));
         verify(priceMapper, times(1)).toEntity(any(PriceDTO.class));
+    }
+
+    @Test
+    void testToEntityFromCreateItemDTO() {
+        CreateItemDTO createItemDTO = new CreateItemDTO(
+                123L, "Test Item", Set.of(new InputPriceDTO(100L)), Set.of(new InputBarcodeDTO("123456789"))
+        );
+
+        Item item = itemMapper.toEntity(createItemDTO);
+
+        assertNotNull(item);
+        assertEquals(123L, item.getArticle());
+        assertEquals("Test Item", item.getName());
+        assertEquals(1, item.getBarcodes().size());
+        assertEquals("123456789", item.getBarcodes().iterator().next().getBarcode());
+        assertEquals(1, item.getPrices().size());
+        assertEquals(100L, item.getPrices().iterator().next().getPrice());
+    }
+
+    @Test
+    void testToEntityFromUpdateItemDTO() {
+        Item existingItem = new Item();
+        existingItem.setArticle(123L);
+        existingItem.setName("Old Name");
+        existingItem.setCreateDate(createdTime);
+        existingItem.setUpdateDate(updatedTime);
+
+        existingItem.setBarcodes(new HashSet<>());
+        existingItem.setPrices(new HashSet<>());
+
+        UpdateItemDTO updateItemDTO = new UpdateItemDTO(
+                123L,
+                "New Name",
+                Set.of(new InputPriceDTO(200L)),
+                Set.of(new InputBarcodeDTO("987654321"))
+        );
+
+        Item updatedItem = itemMapper.toEntity(updateItemDTO, existingItem);
+
+        assertNotNull(updatedItem);
+        assertEquals(123L, updatedItem.getArticle());
+        assertEquals("New Name", updatedItem.getName());
+        assertEquals(1, updatedItem.getBarcodes().size());
+        assertEquals("987654321", updatedItem.getBarcodes().iterator().next().getBarcode());
+        assertEquals(1, updatedItem.getPrices().size());
+        assertEquals(200L, updatedItem.getPrices().iterator().next().getPrice());
+    }
+
+    @Test
+    void testToEntityFromNull() {
+        assertNull(itemMapper.toEntity((ItemDTO) null));
+        assertNull(itemMapper.toEntity((CreateItemDTO) null));
+        assertNull(itemMapper.toEntity(null, new Item()));
+        assertNull(itemMapper.toEntity(new UpdateItemDTO(1L, null, null, null), null));
     }
 }
