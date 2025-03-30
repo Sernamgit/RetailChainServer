@@ -79,4 +79,40 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(CashNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCashNotFoundException(CashNotFoundException ex, HttpServletRequest request) {
+        logger.warn("Касса не найдена: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(CashValidationException.class)
+    public ResponseEntity<ErrorResponse> handleCashValidationException(CashValidationException ex, HttpServletRequest request) {
+        logger.warn("Ошибка валидации кассы: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(CashNumberAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleCashNumberAlreadyExistsException(CashNumberAlreadyExistsException ex, HttpServletRequest request) {
+        logger.warn("Конфликт номеров касс: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
 }

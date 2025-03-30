@@ -14,12 +14,11 @@ import java.util.Optional;
 @Repository
 public interface CashRepository extends JpaRepository<Cash, Long> {
 
-    //поиск по номеру и магазину
     Optional<Cash> findByNumberAndShopNumber(Long number, Long shopNumber);
 
     List<Cash> findByShopNumber(Long shopNumber);
 
-    //Обновление статуса. Используем вместо delete. TODO стоит ли под delete и подсунуть смену статуса?
+    //Обновление статуса. Используем вместо delete.
     @Modifying
     @Query("UPDATE Cash c SET c.status = :status WHERE c.id = :id")
     void updateCashStatus(@Param("id") Long id, @Param("status") STATUS status);

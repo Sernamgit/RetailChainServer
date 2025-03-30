@@ -8,6 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.otus.prof.retail.STATUS;
 import ru.otus.prof.retail.dto.shop.CashDTO;
+import ru.otus.prof.retail.dto.shop.CashDeleteRequestDTO;
+import ru.otus.prof.retail.dto.shop.CashStatusRequestDTO;
 import ru.otus.prof.retail.entities.shops.Cash;
 import ru.otus.prof.retail.entities.shops.Shop;
 import ru.otus.prof.retail.repositories.shops.ShopRepository;
@@ -30,19 +32,20 @@ public class CashMapperTest {
     private LocalDateTime createdTime;
     private LocalDateTime updatedTime;
     private Shop shop;
+    private Cash cash;
 
     @BeforeEach
-    void setup(){
+    void setup() {
         createdTime = LocalDateTime.now();
         updatedTime = LocalDateTime.now();
         shop = new Shop();
         shop.setNumber(1L);
+
+        cash = new Cash(1L, STATUS.ACTIVE, 2L, createdTime, updatedTime, shop);
     }
 
     @Test
     void testToDTO() {
-        Cash cash = new Cash(1L, STATUS.ACTIVE, 2L, createdTime, updatedTime, shop);
-
         CashDTO cashDTO = cashMapper.toDTO(cash);
 
         assertNotNull(cashDTO);
@@ -60,16 +63,56 @@ public class CashMapperTest {
 
         when(shopRepository.findByNumber(1L)).thenReturn(Optional.of(shop));
 
-        Cash cash = cashMapper.toEntity(cashDTO);
+        Cash result = cashMapper.toEntity(cashDTO);
 
-        assertNotNull(cash);
-        assertEquals(cashDTO.id(), cash.getId());
-        assertEquals(cashDTO.status(), cash.getStatus());
-        assertEquals(cashDTO.number(), cash.getNumber());
-        assertEquals(cashDTO.createDate(), cash.getCreateDate());
-        assertEquals(cashDTO.updateDate(), cash.getUpdateDate());
-        assertEquals(cashDTO.shopNumber(), cash.getShop().getNumber());
+        assertNotNull(result);
+        assertEquals(cashDTO.id(), result.getId());
+        assertEquals(cashDTO.status(), result.getStatus());
+        assertEquals(cashDTO.number(), result.getNumber());
+        assertEquals(cashDTO.createDate(), result.getCreateDate());
+        assertEquals(cashDTO.updateDate(), result.getUpdateDate());
+        assertEquals(cashDTO.shopNumber(), result.getShop().getNumber());
 
         verify(shopRepository, times(1)).findByNumber(1L);
+    }
+
+    @Test
+    void testToStatusRequestDTO() {
+        CashStatusRequestDTO dto = cashMapper.toStatusRequestDTO(cash);
+
+        assertNotNull(dto);
+        assertEquals(cash.getId(), dto.id());
+        assertEquals(cash.getNumber(), dto.number());
+        assertEquals(cash.getShop().getNumber(), dto.shopNumber());
+        assertEquals(cash.getStatus(), dto.status());
+    }
+
+    @Test
+    void testToDeleteRequestDTO() {
+        CashDeleteRequestDTO dto = cashMapper.toDeleteRequestDTO(cash);
+
+        assertNotNull(dto);
+        assertEquals(cash.getId(), dto.id());
+        assertEquals(cash.getNumber(), dto.number());
+        assertEquals(cash.getShop().getNumber(), dto.shopNumber());
+    }
+
+    @Test
+    void testToEntityWhenShopNotFound() {
+        CashDTO cashDTO = new CashDTO(1L, STATUS.ACTIVE, 2L, createdTime, updatedTime, 99L);
+
+        when(shopRepository.findByNumber(99L)).thenReturn(Optional.empty());
+
+        Cash result = cashMapper.toEntity(cashDTO);
+
+        assertNotNull(result);
+        assertEquals(cashDTO.id(), result.getId());
+        assertEquals(cashDTO.status(), result.getStatus());
+        assertEquals(cashDTO.number(), result.getNumber());
+        assertEquals(cashDTO.createDate(), result.getCreateDate());
+        assertEquals(cashDTO.updateDate(), result.getUpdateDate());
+        assertNull(result.getShop());
+
+        verify(shopRepository, times(1)).findByNumber(99L);
     }
 }

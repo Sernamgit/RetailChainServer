@@ -7,6 +7,7 @@ import java.time.LocalDate;
 
 public class ShiftSpecification {
 
+    //Функции CAST и DATE не используем. В h2 и postgres не совместимы, ищем всегда по диапазону
     public static Specification<Shift> byCloseDate(LocalDate closeDate) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.between(
                 root.get("closeTime"),
