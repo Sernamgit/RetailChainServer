@@ -158,4 +158,40 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(BarcodeNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleBarcodeNotFoundException(BarcodeNotFoundException ex, HttpServletRequest request) {
+        logger.warn("Штрих-код не найден: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(BarcodeAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleBarcodeAlreadyExistsException(BarcodeAlreadyExistsException ex, HttpServletRequest request) {
+        logger.warn("Штрих-код уже существует: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(BarcodeValidationException.class)
+    public ResponseEntity<ErrorResponse> handleBarcodeValidationException(BarcodeValidationException ex, HttpServletRequest request) {
+        logger.warn("Ошибка валидации штрих-кода: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
 }

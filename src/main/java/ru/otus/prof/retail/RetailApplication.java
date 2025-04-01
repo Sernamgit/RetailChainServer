@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import ru.otus.prof.retail.controllers.product.BarcodeController;
 
 
 @SpringBootApplication
@@ -19,9 +20,6 @@ public class RetailApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-
-//        CashDeleteRequestDTO cashDeleteRequestDTO = new CashDeleteRequestDTO(null, 2L, 1L);
-//        cashController.deleteCash(cashDeleteRequestDTO);
 
     }
 }

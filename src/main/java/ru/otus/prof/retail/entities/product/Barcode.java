@@ -15,7 +15,7 @@ public class Barcode {
     @Column(name = "barcode", nullable = false)
     private String barcode;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "article", nullable = false)
     private Item item;
 }

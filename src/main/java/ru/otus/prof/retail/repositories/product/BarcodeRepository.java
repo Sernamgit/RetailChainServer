@@ -18,5 +18,5 @@ public interface BarcodeRepository extends JpaRepository<Barcode, String> {
     @Query("DELETE FROM Barcode b WHERE b.item.article = :article")
     void deleteAllByItemArticle(@Param("article") Long article);
 
-    void deleteByBarcode(String barcode);
+    boolean existsByBarcodeIn(List<String> barcodes);
 }
