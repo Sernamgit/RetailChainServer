@@ -1,6 +1,5 @@
 package ru.otus.prof.retail.services.product;
 
-
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,17 +9,19 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import ru.otus.prof.retail.dto.product.PriceDTO;
 import ru.otus.prof.retail.entities.product.Item;
+import ru.otus.prof.retail.exception.product.ItemNotFoundException;
+import ru.otus.prof.retail.exception.product.PriceNotFoundException;
 import ru.otus.prof.retail.mappers.product.PriceMapper;
 import ru.otus.prof.retail.repositories.product.ItemRepository;
 import ru.otus.prof.retail.repositories.product.PriceRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 public class PriceServiceTest {
 
     @Autowired
@@ -39,13 +40,11 @@ public class PriceServiceTest {
 
     @BeforeEach
     void setUp() {
-        Optional<Item> itemOpt = itemRepository.findById(1001L);
-        assertTrue(itemOpt.isPresent());
-        item = itemOpt.get();
+        item = itemRepository.findById(1001L)
+                .orElseThrow(() -> new ItemNotFoundException("Item not found"));
     }
 
     @Test
-    @Transactional
     @Rollback
     void testCreatePrice() {
         PriceDTO priceDTO = new PriceDTO(null, 333L, item.getArticle());
@@ -54,10 +53,10 @@ public class PriceServiceTest {
 
         assertNotNull(createdPriceDTO.id());
         assertEquals(333L, createdPriceDTO.price());
+        assertEquals(item.getArticle(), createdPriceDTO.article());
     }
 
     @Test
-    @Transactional
     @Rollback
     void testCreatePrices() {
         PriceDTO priceDTO1 = new PriceDTO(null, 150L, item.getArticle());
@@ -68,53 +67,59 @@ public class PriceServiceTest {
         assertEquals(2, createdPriceDTOs.size());
         assertNotNull(createdPriceDTOs.get(0).id());
         assertNotNull(createdPriceDTOs.get(1).id());
+        assertEquals(item.getArticle(), createdPriceDTOs.get(0).article());
+        assertEquals(item.getArticle(), createdPriceDTOs.get(1).article());
     }
 
     @Test
-    @Transactional
     @Rollback
     void testUpdatePrice() {
         PriceDTO priceDTO = new PriceDTO(null, 150L, item.getArticle());
-
         PriceDTO createdPriceDTO = priceService.createPrice(priceDTO);
-        PriceDTO updatedPriceDTO = new PriceDTO(createdPriceDTO.id(), 200L, item.getArticle());
 
+        PriceDTO updatedPriceDTO = new PriceDTO(createdPriceDTO.id(), 200L, item.getArticle());
         PriceDTO resultPriceDTO = priceService.updatePrice(updatedPriceDTO);
 
         assertEquals(200L, resultPriceDTO.price());
+        assertEquals(createdPriceDTO.id(), resultPriceDTO.id());
     }
 
     @Test
-    @Transactional
     @Rollback
     void testDeletePrice() {
         PriceDTO priceDTO = new PriceDTO(null, 150L, item.getArticle());
-
         PriceDTO createdPriceDTO = priceService.createPrice(priceDTO);
+
         priceService.deletePrice(createdPriceDTO.id());
 
         assertFalse(priceRepository.findById(createdPriceDTO.id()).isPresent());
     }
 
     @Test
-    @Transactional
     @Rollback
     void testDeleteAllPricesByItemArticle() {
+        List<PriceDTO> pricesBefore = priceService.getPricesByItemArticle(1001L);
+        assertFalse(pricesBefore.isEmpty());
+
         priceService.deleteAllPricesByItemArticle(1001L);
 
-        List<PriceDTO> prices = priceService.getPricesByItemArticle(1001L);
-        assertTrue(prices.isEmpty());
+        assertThrows(PriceNotFoundException.class,() -> priceService.getPricesByItemArticle(1001L));
     }
 
     @Test
+    @Rollback
     void testGetPricesByItemArticle() {
         List<PriceDTO> prices = priceService.getPricesByItemArticle(1001L);
 
         assertEquals(3, prices.size());
-        assertEquals(100L, prices.get(0).price());
-        assertEquals(101L, prices.get(1).price());
-        assertEquals(103L, prices.get(2).price());
+        assertTrue(prices.stream().anyMatch(p -> p.price() == 100L));
+        assertTrue(prices.stream().anyMatch(p -> p.price() == 101L));
+        assertTrue(prices.stream().anyMatch(p -> p.price() == 103L));
     }
 
-
+    @Test
+    @Rollback
+    void testGetPricesByNonExistentItemArticle() {
+        assertThrows(ItemNotFoundException.class, () -> priceService.getPricesByItemArticle(9999L));
+    }
 }

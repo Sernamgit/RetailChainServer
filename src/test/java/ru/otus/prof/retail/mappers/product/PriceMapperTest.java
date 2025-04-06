@@ -1,6 +1,5 @@
 package ru.otus.prof.retail.mappers.product;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -9,11 +8,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.otus.prof.retail.dto.product.PriceDTO;
 import ru.otus.prof.retail.entities.product.Item;
 import ru.otus.prof.retail.entities.product.Price;
+import ru.otus.prof.retail.exception.MappingException;
+import ru.otus.prof.retail.exception.product.ItemNotFoundException;
 import ru.otus.prof.retail.repositories.product.ItemRepository;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,39 +27,59 @@ class PriceMapperTest {
     @InjectMocks
     private PriceMapper priceMapper;
 
-    private Item item;
+    @Test
+    void toDTO_ShouldConvertPriceToDTO() {
+        Item item = new Item(12345L, "Test Item", null, null, null, null);
+        Price price = new Price(1L, 10000L, item);
 
-    @BeforeEach
-    void setup() {
-        item = new Item();
-        item.setArticle(123L);
+        PriceDTO dto = priceMapper.toDTO(price);
+
+        assertNotNull(dto);
+        assertEquals(price.getId(), dto.id());
+        assertEquals(price.getPrice(), dto.price());
+        assertEquals(item.getArticle(), dto.article());
     }
 
     @Test
-    void testToDTO() {
-        Price price = new Price(1L, 100L, item);
-
-        PriceDTO priceDTO = priceMapper.toDTO(price);
-
-        assertNotNull(priceDTO);
-        assertEquals(1L, priceDTO.id());
-        assertEquals(100L, priceDTO.price());
-        assertEquals(123L, priceDTO.article());
+    void toDTO_ShouldReturnNullWhenPriceIsNull() {
+        assertNull(priceMapper.toDTO(null));
     }
 
     @Test
-    void testToEntity() {
-        PriceDTO priceDTO = new PriceDTO(1L, 100L, 123L);
+    void toDTO_ShouldThrowExceptionWhenItemIsNull() {
+        Price price = new Price();
+        price.setId(1L);
+        price.setPrice(10000L);
 
-        when(itemRepository.findById(123L)).thenReturn(Optional.of(item));
+        assertThrows(MappingException.class, () -> priceMapper.toDTO(price));
+    }
 
-        Price price = priceMapper.toEntity(priceDTO);
+    @Test
+    void toEntity_ShouldConvertPriceDTOToEntity() {
+        PriceDTO dto = new PriceDTO(1L, 10000L, 12345L);
+        Item item = new Item(12345L, "Test Item", null, null, null, null);
+
+        when(itemRepository.findById(anyLong())).thenReturn(Optional.of(item));
+
+        Price price = priceMapper.toEntity(dto);
 
         assertNotNull(price);
-        assertEquals(1L, price.getId());
-        assertEquals(100L, price.getPrice());
+        assertEquals(dto.id(), price.getId());
+        assertEquals(dto.price(), price.getPrice());
         assertEquals(item, price.getItem());
+    }
 
-        verify(itemRepository, times(1)).findById(123L);
+    @Test
+    void toEntity_ShouldThrowExceptionWhenItemNotFound() {
+        PriceDTO dto = new PriceDTO(1L, 10000L, 12345L);
+
+        when(itemRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        assertThrows(ItemNotFoundException.class, () -> priceMapper.toEntity(dto));
+    }
+
+    @Test
+    void toEntity_ShouldReturnNullWhenDTOIsNull() {
+        assertNull(priceMapper.toEntity(null));
     }
 }

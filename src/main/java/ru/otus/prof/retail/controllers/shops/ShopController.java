@@ -16,8 +16,8 @@ import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 import ru.otus.prof.retail.dto.shop.ShopBasicDTO;
 import ru.otus.prof.retail.dto.shop.ShopDTO;
-import ru.otus.prof.retail.exception.ShopNotFoundException;
-import ru.otus.prof.retail.exception.ShopValidationException;
+import ru.otus.prof.retail.exception.shop.ShopNotFoundException;
+import ru.otus.prof.retail.exception.shop.ShopValidationException;
 import ru.otus.prof.retail.services.shops.ShopService;
 
 import java.util.Optional;

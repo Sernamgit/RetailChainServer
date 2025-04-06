@@ -35,7 +35,7 @@ public class Shift {
     @Column(name = "total")
     private Long total;
 
-    @OneToMany(mappedBy = "shift", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "shift", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<Purchase> purchases = new HashSet<>();
 
     @Override

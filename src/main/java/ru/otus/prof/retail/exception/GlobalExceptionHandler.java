@@ -4,12 +4,22 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import ru.otus.prof.retail.dto.error.ErrorResponse;
+import ru.otus.prof.retail.exception.product.*;
+import ru.otus.prof.retail.exception.purchases.PurchaseNotFoundException;
+import ru.otus.prof.retail.exception.purchases.ShiftNotFoundException;
+import ru.otus.prof.retail.exception.purchases.ShiftValidationException;
+import ru.otus.prof.retail.exception.shop.*;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -18,180 +28,110 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(ShopNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleShopNotFoundException(ShopNotFoundException ex, HttpServletRequest request) {
-        logger.warn("Магазин не найден: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.NOT_FOUND.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+
+    @ExceptionHandler({
+            ShopNotFoundException.class, CashNotFoundException.class, ItemNotFoundException.class,
+            BarcodeNotFoundException.class, PriceNotFoundException.class, ShiftNotFoundException.class,
+            PurchaseNotFoundException.class
+    })
+    public ResponseEntity<ErrorResponse> handleNotFoundException(Exception ex, HttpServletRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.NOT_FOUND, false);
     }
 
-    @ExceptionHandler(ShopValidationException.class)
-    public ResponseEntity<ErrorResponse> handleShopValidationException(ShopValidationException ex, HttpServletRequest request) {
-        logger.warn("Ошибка валидации: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    @ExceptionHandler({
+            ShopValidationException.class, CashValidationException.class, ItemValidationException.class,
+            BarcodeValidationException.class, PriceValidationException.class, ShiftValidationException.class
+    })
+    public ResponseEntity<ErrorResponse> handleValidationException(Exception ex, HttpServletRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST, false);
     }
 
-    @ExceptionHandler(ShopNumberAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleShopNumberAlreadyExistsException(ShopNumberAlreadyExistsException ex, HttpServletRequest request) {
-        logger.warn("Конфликт номеров магазинов: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.CONFLICT.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    @ExceptionHandler({ShopNumberAlreadyExistsException.class, CashNumberAlreadyExistsException.class, BarcodeAlreadyExistsException.class})
+    public ResponseEntity<ErrorResponse> handleConflictException(Exception ex, HttpServletRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.CONFLICT, false);
     }
+
+    @ExceptionHandler({DataIntegrityViolationException.class, JpaSystemException.class, DataAccessException.class})
+    public ResponseEntity<ErrorResponse> handleDataException(Exception ex, HttpServletRequest request) {
+        String message = "Ошибка данных: " + extractRootCauseMessage(ex);
+        return buildErrorResponse(ex, request, HttpStatus.INTERNAL_SERVER_ERROR, true, message);
+    }
+
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpServletRequest request) {
+
         String errorMessage = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .reduce("", (s1, s2) -> s1 + "; " + s2);
+                .collect(Collectors.joining("; "));
 
         logger.warn("Ошибка валидации параметров: {}", errorMessage);
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                "Ошибка валидации: " + errorMessage,
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST, false, "Ошибка валидации: " + errorMessage);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex, HttpServletRequest request) {
-        logger.error("Внутренняя ошибка сервера: ", ex);
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Внутренняя ошибка сервера: " + ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+
+        String errorMessage = String.format("Неверный формат параметра '%s': значение '%s' не соответствует ожидаемому типу", ex.getName(),ex.getValue());
+
+        logger.warn("Ошибка преобразования типа: {}", errorMessage);
+        return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST, false, errorMessage);
     }
 
-    @ExceptionHandler(CashNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleCashNotFoundException(CashNotFoundException ex, HttpServletRequest request) {
-        logger.warn("Касса не найдена: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.NOT_FOUND.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
-    }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
 
-    @ExceptionHandler(CashValidationException.class)
-    public ResponseEntity<ErrorResponse> handleCashValidationException(CashValidationException ex, HttpServletRequest request) {
-        logger.warn("Ошибка валидации кассы: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(CashNumberAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleCashNumberAlreadyExistsException(CashNumberAlreadyExistsException ex, HttpServletRequest request) {
-        logger.warn("Конфликт номеров касс: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.CONFLICT.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(ItemNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleItemNotFoundException(ItemNotFoundException ex, HttpServletRequest request) {
-        logger.warn("Товар не найден: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.NOT_FOUND.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(ItemValidationException.class)
-    public ResponseEntity<ErrorResponse> handleItemValidationException(ItemValidationException ex, HttpServletRequest request) {
-        logger.warn("Ошибка валидации товара: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        String errorMessage = "Неверный формат JSON: " + ex.getMostSpecificCause().getMessage();
+        logger.warn("Ошибка парсинга JSON: {}", errorMessage);
+        return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST, false, errorMessage);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex, HttpServletRequest request) {
+
         String errorMessage = ex.getConstraintViolations().stream()
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
                 .collect(Collectors.joining("; "));
 
         logger.warn("Ошибка валидации параметров пути: {}", errorMessage);
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                "Ошибка валидации: " + errorMessage,
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST, false, "Ошибка валидации: " + errorMessage);
     }
 
-    @ExceptionHandler(BarcodeNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleBarcodeNotFoundException(BarcodeNotFoundException ex, HttpServletRequest request) {
-        logger.warn("Штрих-код не найден: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.NOT_FOUND.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    @ExceptionHandler(MappingException.class)
+    public ResponseEntity<ErrorResponse> handleMappingException(MappingException ex, HttpServletRequest request) {
+
+        logger.error("Ошибка преобразования данных: {}", ex.getMessage(), ex);
+        return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST, true, "Ошибка преобразования данных: " + ex.getMessage());
     }
 
-    @ExceptionHandler(BarcodeAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleBarcodeAlreadyExistsException(BarcodeAlreadyExistsException ex, HttpServletRequest request) {
-        logger.warn("Штрих-код уже существует: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.CONFLICT.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex, HttpServletRequest request) {
+        logger.error("Внутренняя ошибка сервера: ", ex);
+        return buildErrorResponse(ex, request, HttpStatus.INTERNAL_SERVER_ERROR, true, "Внутренняя ошибка сервера: " + ex.getMessage());
     }
 
-    @ExceptionHandler(BarcodeValidationException.class)
-    public ResponseEntity<ErrorResponse> handleBarcodeValidationException(BarcodeValidationException ex, HttpServletRequest request) {
-        logger.warn("Ошибка валидации штрих-кода: {}", ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+
+    private ResponseEntity<ErrorResponse> buildErrorResponse(Exception ex, HttpServletRequest request, HttpStatus status, boolean logStackTrace) {
+        return buildErrorResponse(ex, request, status, logStackTrace, ex.getMessage());
     }
 
+    private ResponseEntity<ErrorResponse> buildErrorResponse(Exception ex, HttpServletRequest request, HttpStatus status, boolean logStackTrace, String customMessage) {
+
+        if (logStackTrace) {
+            logger.error(customMessage, ex);
+        } else {
+            logger.warn(customMessage);
+        }
+
+        ErrorResponse errorResponse = new ErrorResponse(LocalDateTime.now(), status.value(), customMessage, request.getRequestURI());
+        return new ResponseEntity<>(errorResponse, status);
+    }
+
+    private String extractRootCauseMessage(Exception ex) {
+        Throwable rootCause = ex;
+        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+            rootCause = rootCause.getCause();
+        }
+        return rootCause.getMessage();
+    }
 }

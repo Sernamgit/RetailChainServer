@@ -10,17 +10,18 @@ import java.util.Set;
 
 @Schema(description = "DTO для создания нового товара")
 public record CreateItemDTO(
-        @Schema(description = "Артикул товара", required = true, example = "12345")
+        @Schema(description = "Артикул товара", example = "123456", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull(message = "Артикул не может быть пустым")
         @Min(value = 1, message = "Артикул должен быть положительным числом")
         Long article,
 
-        @Schema(description = "Наименование товара", required = true, example = "Ноутбук")
+        @Schema(description = "Наименование товара", example = "Ноутбук", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Наименование товара не может быть пустым")
         String name,
 
-        @Schema(description = "Список цен товара")
+        @Schema(description = "Список цен товара", example = "[{\"price\": 99990}]")
         Set<@Valid InputPriceDTO> prices,
 
-        @Schema(description = "Список штрих-кодов товара")
-        Set<@Valid InputBarcodeDTO> barcodes) {}
+        @Schema(description = "Список штрих-кодов товара", example = "[{\"barcode\": \"4601234567890\"}]")
+        Set<@Valid InputBarcodeDTO> barcodes) {
+}

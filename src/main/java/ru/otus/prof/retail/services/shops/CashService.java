@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 import ru.otus.prof.retail.STATUS;
 import ru.otus.prof.retail.dto.shop.CashDTO;
 import ru.otus.prof.retail.entities.shops.Cash;
-import ru.otus.prof.retail.exception.CashNotFoundException;
-import ru.otus.prof.retail.exception.CashNumberAlreadyExistsException;
-import ru.otus.prof.retail.exception.CashValidationException;
+import ru.otus.prof.retail.exception.shop.CashNotFoundException;
+import ru.otus.prof.retail.exception.shop.CashNumberAlreadyExistsException;
+import ru.otus.prof.retail.exception.shop.CashValidationException;
 import ru.otus.prof.retail.mappers.shop.CashMapper;
 import ru.otus.prof.retail.repositories.shops.CashRepository;
 

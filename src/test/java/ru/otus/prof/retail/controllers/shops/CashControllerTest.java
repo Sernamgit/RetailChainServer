@@ -13,8 +13,8 @@ import ru.otus.prof.retail.STATUS;
 import ru.otus.prof.retail.dto.shop.CashDTO;
 import ru.otus.prof.retail.dto.shop.CashDeleteRequestDTO;
 import ru.otus.prof.retail.dto.shop.CashStatusRequestDTO;
-import ru.otus.prof.retail.exception.CashNotFoundException;
-import ru.otus.prof.retail.exception.CashNumberAlreadyExistsException;
+import ru.otus.prof.retail.exception.shop.CashNotFoundException;
+import ru.otus.prof.retail.exception.shop.CashNumberAlreadyExistsException;
 import ru.otus.prof.retail.services.shops.CashService;
 
 import java.time.LocalDateTime;

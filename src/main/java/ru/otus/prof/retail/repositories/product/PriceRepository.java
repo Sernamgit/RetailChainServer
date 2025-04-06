@@ -17,4 +17,5 @@ public interface PriceRepository extends JpaRepository<Price, Long> {
     @Modifying
     @Query("DELETE FROM Price p WHERE p.item.article = :article")
     void deleteAllByItemArticle(@Param("article") Long article);
+
 }

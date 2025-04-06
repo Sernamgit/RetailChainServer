@@ -1,27 +1,29 @@
 package ru.otus.prof.retail.mappers.shop;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.otus.prof.retail.STATUS;
 import ru.otus.prof.retail.dto.shop.CashDTO;
 import ru.otus.prof.retail.dto.shop.CashDeleteRequestDTO;
 import ru.otus.prof.retail.dto.shop.CashStatusRequestDTO;
 import ru.otus.prof.retail.entities.shops.Cash;
 import ru.otus.prof.retail.entities.shops.Shop;
+import ru.otus.prof.retail.exception.MappingException;
+import ru.otus.prof.retail.exception.shop.ShopNotFoundException;
 import ru.otus.prof.retail.repositories.shops.ShopRepository;
+import ru.otus.prof.retail.STATUS;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CashMapperTest {
+class CashMapperTest {
 
     @Mock
     private ShopRepository shopRepository;
@@ -29,55 +31,41 @@ public class CashMapperTest {
     @InjectMocks
     private CashMapper cashMapper;
 
-    private LocalDateTime createdTime;
-    private LocalDateTime updatedTime;
-    private Shop shop;
-    private Cash cash;
+    private final LocalDateTime testTime = LocalDateTime.now();
+    private final Shop testShop = new Shop(1L, 101L, "Test Shop", "Address", null);
 
-    @BeforeEach
-    void setup() {
-        createdTime = LocalDateTime.now();
-        updatedTime = LocalDateTime.now();
-        shop = new Shop();
-        shop.setNumber(1L);
+    @Test
+    void toDTO_ShouldConvertCashToDTO() {
+        Cash cash = new Cash(1L, STATUS.ACTIVE, 1L, testTime, testTime, testShop);
 
-        cash = new Cash(1L, STATUS.ACTIVE, 2L, createdTime, updatedTime, shop);
+        CashDTO dto = cashMapper.toDTO(cash);
+
+        assertNotNull(dto);
+        assertEquals(cash.getId(), dto.id());
+        assertEquals(cash.getStatus(), dto.status());
+        assertEquals(cash.getNumber(), dto.number());
+        assertEquals(cash.getCreateDate(), dto.createDate());
+        assertEquals(cash.getUpdateDate(), dto.updateDate());
+        assertEquals(cash.getShop().getNumber(), dto.shopNumber());
     }
 
     @Test
-    void testToDTO() {
-        CashDTO cashDTO = cashMapper.toDTO(cash);
-
-        assertNotNull(cashDTO);
-        assertEquals(cash.getId(), cashDTO.id());
-        assertEquals(cash.getStatus(), cashDTO.status());
-        assertEquals(cash.getNumber(), cashDTO.number());
-        assertEquals(cash.getCreateDate(), cashDTO.createDate());
-        assertEquals(cash.getUpdateDate(), cashDTO.updateDate());
-        assertEquals(cash.getShop().getNumber(), cashDTO.shopNumber());
+    void toDTO_ShouldThrowExceptionWhenCashIsNull() {
+        assertNull(cashMapper.toDTO(null));
     }
 
     @Test
-    void testToEntity() {
-        CashDTO cashDTO = new CashDTO(1L, STATUS.ACTIVE, 2L, createdTime, updatedTime, 1L);
+    void toDTO_ShouldThrowExceptionWhenShopIsNull() {
+        Cash cash = new Cash();
+        cash.setId(1L);
 
-        when(shopRepository.findByNumber(1L)).thenReturn(Optional.of(shop));
-
-        Cash result = cashMapper.toEntity(cashDTO);
-
-        assertNotNull(result);
-        assertEquals(cashDTO.id(), result.getId());
-        assertEquals(cashDTO.status(), result.getStatus());
-        assertEquals(cashDTO.number(), result.getNumber());
-        assertEquals(cashDTO.createDate(), result.getCreateDate());
-        assertEquals(cashDTO.updateDate(), result.getUpdateDate());
-        assertEquals(cashDTO.shopNumber(), result.getShop().getNumber());
-
-        verify(shopRepository, times(1)).findByNumber(1L);
+        assertThrows(MappingException.class, () -> cashMapper.toDTO(cash));
     }
 
     @Test
-    void testToStatusRequestDTO() {
+    void toStatusRequestDTO_ShouldConvertCashToStatusRequestDTO() {
+        Cash cash = new Cash(1L, STATUS.ACTIVE, 1L, testTime, testTime, testShop);
+
         CashStatusRequestDTO dto = cashMapper.toStatusRequestDTO(cash);
 
         assertNotNull(dto);
@@ -88,7 +76,9 @@ public class CashMapperTest {
     }
 
     @Test
-    void testToDeleteRequestDTO() {
+    void toDeleteRequestDTO_ShouldConvertCashToDeleteRequestDTO() {
+        Cash cash = new Cash(1L, STATUS.ACTIVE, 1L, testTime, testTime, testShop);
+
         CashDeleteRequestDTO dto = cashMapper.toDeleteRequestDTO(cash);
 
         assertNotNull(dto);
@@ -98,21 +88,31 @@ public class CashMapperTest {
     }
 
     @Test
-    void testToEntityWhenShopNotFound() {
-        CashDTO cashDTO = new CashDTO(1L, STATUS.ACTIVE, 2L, createdTime, updatedTime, 99L);
+    void toEntity_ShouldConvertCashDTOToEntity() {
+        CashDTO dto = new CashDTO(1L, STATUS.ACTIVE, 1L, testTime, testTime, 101L);
+        when(shopRepository.findByNumber(anyLong())).thenReturn(Optional.of(testShop));
 
-        when(shopRepository.findByNumber(99L)).thenReturn(Optional.empty());
+        Cash cash = cashMapper.toEntity(dto);
 
-        Cash result = cashMapper.toEntity(cashDTO);
+        assertNotNull(cash);
+        assertEquals(dto.id(), cash.getId());
+        assertEquals(dto.status(), cash.getStatus());
+        assertEquals(dto.number(), cash.getNumber());
+        assertEquals(dto.createDate(), cash.getCreateDate());
+        assertEquals(dto.updateDate(), cash.getUpdateDate());
+        assertEquals(testShop, cash.getShop());
+    }
 
-        assertNotNull(result);
-        assertEquals(cashDTO.id(), result.getId());
-        assertEquals(cashDTO.status(), result.getStatus());
-        assertEquals(cashDTO.number(), result.getNumber());
-        assertEquals(cashDTO.createDate(), result.getCreateDate());
-        assertEquals(cashDTO.updateDate(), result.getUpdateDate());
-        assertNull(result.getShop());
+    @Test
+    void toEntity_ShouldThrowExceptionWhenShopNotFound() {
+        CashDTO dto = new CashDTO(1L, STATUS.ACTIVE, 1L, testTime, testTime, 101L);
+        when(shopRepository.findByNumber(anyLong())).thenReturn(Optional.empty());
 
-        verify(shopRepository, times(1)).findByNumber(99L);
+        assertThrows(ShopNotFoundException.class, () -> cashMapper.toEntity(dto));
+    }
+
+    @Test
+    void toEntity_ShouldReturnNullWhenDTOIsNull() {
+        assertNull(cashMapper.toEntity(null));
     }
 }

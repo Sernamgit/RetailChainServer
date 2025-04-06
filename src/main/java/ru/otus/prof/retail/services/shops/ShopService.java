@@ -12,9 +12,9 @@ import ru.otus.prof.retail.entities.shops.Shop;
 import ru.otus.prof.retail.mappers.shop.ShopMapper;
 import ru.otus.prof.retail.repositories.shops.CashRepository;
 import ru.otus.prof.retail.repositories.shops.ShopRepository;
-import ru.otus.prof.retail.exception.ShopNotFoundException;
-import ru.otus.prof.retail.exception.ShopNumberAlreadyExistsException;
-import ru.otus.prof.retail.exception.ShopValidationException;
+import ru.otus.prof.retail.exception.shop.ShopNotFoundException;
+import ru.otus.prof.retail.exception.shop.ShopNumberAlreadyExistsException;
+import ru.otus.prof.retail.exception.shop.ShopValidationException;
 
 import java.util.List;
 import java.util.Optional;

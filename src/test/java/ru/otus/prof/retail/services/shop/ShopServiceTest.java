@@ -7,9 +7,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import ru.otus.prof.retail.dto.shop.ShopDTO;
 import ru.otus.prof.retail.entities.shops.Cash;
-import ru.otus.prof.retail.exception.ShopNotFoundException;
-import ru.otus.prof.retail.exception.ShopNumberAlreadyExistsException;
-import ru.otus.prof.retail.exception.ShopValidationException;
+import ru.otus.prof.retail.exception.shop.ShopNotFoundException;
+import ru.otus.prof.retail.exception.shop.ShopNumberAlreadyExistsException;
+import ru.otus.prof.retail.exception.shop.ShopValidationException;
 import ru.otus.prof.retail.repositories.shops.CashRepository;
 import ru.otus.prof.retail.repositories.shops.ShopRepository;
 import ru.otus.prof.retail.services.shops.ShopService;
@@ -49,9 +49,7 @@ public class ShopServiceTest {
         Long existingNumber = 1L;
         ShopDTO shopDTO = new ShopDTO(null, existingNumber, "Test shop", "Test address", null);
 
-        assertThrows(ShopNumberAlreadyExistsException.class, () -> {
-            shopService.createShop(shopDTO);
-        });
+        assertThrows(ShopNumberAlreadyExistsException.class, () -> shopService.createShop(shopDTO));
     }
 
     @Test
@@ -105,9 +103,7 @@ public class ShopServiceTest {
     void testUpdateShopWithoutIdOrNumber_ShouldThrowException() {
         ShopDTO invalidShopDTO = new ShopDTO(null, null, "Name", "Address", null);
 
-        assertThrows(ShopValidationException.class, () -> {
-            shopService.updateShop(invalidShopDTO);
-        });
+        assertThrows(ShopValidationException.class, () -> shopService.updateShop(invalidShopDTO));
     }
 
     @Test
@@ -115,9 +111,7 @@ public class ShopServiceTest {
         Long nonExistingId = 999L;
         ShopDTO shopDTO = new ShopDTO(nonExistingId, null, "Name", "Address", null);
 
-        assertThrows(ShopNotFoundException.class, () -> {
-            shopService.updateShop(shopDTO);
-        });
+        assertThrows(ShopNotFoundException.class, () -> shopService.updateShop(shopDTO));
     }
 
     @Test
@@ -141,9 +135,7 @@ public class ShopServiceTest {
     void testDeleteNonExistingShop_ShouldThrowException() {
         Long nonExistingId = 999L;
 
-        assertThrows(ShopNotFoundException.class, () -> {
-            shopService.deleteShop(nonExistingId);
-        });
+        assertThrows(ShopNotFoundException.class, () -> shopService.deleteShop(nonExistingId));
     }
 
     @Test

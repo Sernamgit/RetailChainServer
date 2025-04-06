@@ -9,8 +9,8 @@ import ru.otus.prof.retail.dto.product.CreateItemDTO;
 import ru.otus.prof.retail.dto.product.ItemDTO;
 import ru.otus.prof.retail.dto.product.UpdateItemDTO;
 import ru.otus.prof.retail.entities.product.Item;
-import ru.otus.prof.retail.exception.ItemNotFoundException;
-import ru.otus.prof.retail.exception.ItemValidationException;
+import ru.otus.prof.retail.exception.product.ItemNotFoundException;
+import ru.otus.prof.retail.exception.product.ItemValidationException;
 import ru.otus.prof.retail.mappers.product.ItemMapper;
 import ru.otus.prof.retail.repositories.product.ItemRepository;
 

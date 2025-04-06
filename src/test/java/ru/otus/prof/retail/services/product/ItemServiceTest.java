@@ -9,8 +9,8 @@ import org.springframework.test.context.ActiveProfiles;
 import ru.otus.prof.retail.dto.product.CreateItemDTO;
 import ru.otus.prof.retail.dto.product.ItemDTO;
 import ru.otus.prof.retail.dto.product.UpdateItemDTO;
-import ru.otus.prof.retail.exception.ItemNotFoundException;
-import ru.otus.prof.retail.exception.ItemValidationException;
+import ru.otus.prof.retail.exception.product.ItemNotFoundException;
+import ru.otus.prof.retail.exception.product.ItemValidationException;
 import ru.otus.prof.retail.mappers.product.ItemMapper;
 import ru.otus.prof.retail.repositories.product.ItemRepository;
 
@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 public class ItemServiceTest {
 
     @Autowired
@@ -33,6 +34,7 @@ public class ItemServiceTest {
     private ItemMapper itemMapper;
 
     @Test
+    @Rollback
     void testCreateItem() {
         CreateItemDTO newItemDTO = new CreateItemDTO(
                 1003L, "Item 3", Collections.emptySet(), Collections.emptySet());
@@ -47,15 +49,15 @@ public class ItemServiceTest {
     }
 
     @Test
+    @Rollback
     void testCreateItemWithDuplicateArticle_ShouldThrowException() {
         CreateItemDTO duplicateItemDTO = new CreateItemDTO(
-                1001L, "Duplicate Item",  Collections.emptySet(), Collections.emptySet());
+                1001L, "Duplicate Item", Collections.emptySet(), Collections.emptySet());
 
         assertThrows(ItemValidationException.class, () -> itemService.createItem(duplicateItemDTO));
     }
 
     @Test
-    @Transactional
     @Rollback
     void testGetItem() {
         Optional<ItemDTO> itemDTO = itemService.getItem(1001L);
@@ -68,13 +70,13 @@ public class ItemServiceTest {
     }
 
     @Test
+    @Rollback
     void testGetNonExistentItem_ShouldReturnEmpty() {
         Optional<ItemDTO> itemDTO = itemService.getItem(9999L);
         assertFalse(itemDTO.isPresent());
     }
 
     @Test
-    @Transactional
     @Rollback
     void testUpdateItem() {
         UpdateItemDTO updateItemDTO = new UpdateItemDTO(1001L, "Updated Item 1", null, null);
@@ -89,6 +91,7 @@ public class ItemServiceTest {
     }
 
     @Test
+    @Rollback
     void testUpdateNonExistentItem_ShouldThrowException() {
         UpdateItemDTO updateItemDTO = new UpdateItemDTO(9999L, "Non-existent Item", null, null);
 
@@ -96,7 +99,6 @@ public class ItemServiceTest {
     }
 
     @Test
-    @Transactional
     @Rollback
     void testDeleteItem() {
         Optional<ItemDTO> itemBeforeDeletion = itemService.getItem(1001L);
@@ -109,6 +111,7 @@ public class ItemServiceTest {
     }
 
     @Test
+    @Rollback
     void testDeleteNonExistentItem_ShouldThrowException() {
         assertThrows(ItemNotFoundException.class, () -> itemService.deleteItem(9999L));
     }

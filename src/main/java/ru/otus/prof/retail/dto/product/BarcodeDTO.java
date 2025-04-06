@@ -10,20 +10,12 @@ import jakarta.validation.constraints.Size;
 public record BarcodeDTO(
         @NotBlank(message = "Значение штрих-кода не может быть пустым")
         @Size(min = 8, max = 50, message = "Длина штрих-кода должна быть от 8 до 50 символов")
-        @Schema(
-                description = "Уникальное значение штрих-кода",
-                example = "123456789012",
-                minLength = 8,
-                maxLength = 50
-        )
+        @Schema(description = "Уникальное значение штрих-кода", example = "123456789012", minLength = 8, maxLength = 50)
         String barcode,
 
         @NotNull(message = "Артикул товара не может быть пустым")
         @Positive(message = "Артикул товара должен быть положительным числом")
-        @Schema(
-                description = "Артикул товара, к которому привязан штрих-код",
-                example = "12345"
-        )
+        @Schema(description = "Артикул товара, к которому привязан штрих-код", example = "12345")
         Long article
 ) {
 }

@@ -21,7 +21,7 @@ public class Price {
     @Column(name = "price", nullable = false)
     private Long price;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "article", nullable = false)
     private Item item;
 }

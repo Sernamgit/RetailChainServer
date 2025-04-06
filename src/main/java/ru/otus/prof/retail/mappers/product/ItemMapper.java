@@ -7,9 +7,11 @@ import ru.otus.prof.retail.dto.product.*;
 import ru.otus.prof.retail.entities.product.Barcode;
 import ru.otus.prof.retail.entities.product.Item;
 import ru.otus.prof.retail.entities.product.Price;
+import ru.otus.prof.retail.exception.MappingException;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,53 +29,108 @@ public class ItemMapper {
 
     public ItemDTO toDTO(Item item) {
         if (item == null) {
-            logger.debug("Передан null вместо объекта Item, возвращаем null");
+            logger.warn("Попытка преобразования null Item в DTO");
             return null;
         }
 
-        logger.debug("Начало преобразования Item в DTO для артикула: {}", item.getArticle());
+        logger.debug("Преобразование Item в DTO (Артикул: {})", item.getArticle());
 
-        Set<BarcodeDTO> barcodeDTOs = item.getBarcodes() == null ? Collections.emptySet() :
-                item.getBarcodes().stream()
-                        .map(barcodeMapper::toDTO)
+        try {
+            Set<BarcodeDTO> barcodeDTOs = Collections.emptySet();
+            if (item.getBarcodes() != null) {
+                barcodeDTOs = item.getBarcodes().stream()
+                        .map(barcode -> {
+                            try {
+                                return barcodeMapper.toDTO(barcode);
+                            } catch (Exception e) {
+                                logger.warn("Ошибка преобразования штрих-кода (Значение: {})", barcode.getBarcode(), e);
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
                         .collect(Collectors.toSet());
+            }
 
-        Set<PriceDTO> priceDTOs = item.getPrices() == null ? Collections.emptySet() :
-                item.getPrices().stream()
-                        .map(priceMapper::toDTO)
+            Set<PriceDTO> priceDTOs = Collections.emptySet();
+            if (item.getPrices() != null) {
+                priceDTOs = item.getPrices().stream()
+                        .map(price -> {
+                            try {
+                                return priceMapper.toDTO(price);
+                            } catch (Exception e) {
+                                logger.warn("Ошибка преобразования цены (ID: {})", price.getId(), e);
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
                         .collect(Collectors.toSet());
+            }
 
-        ItemDTO result = new ItemDTO(item.getArticle(), item.getName(), item.getCreateDate(), item.getUpdateDate(), priceDTOs, barcodeDTOs);
-        logger.debug("Успешно преобразовано Item в DTO для артикула: {}", item.getArticle());
-        return result;
+            ItemDTO dto = new ItemDTO(item.getArticle(), item.getName(), item.getCreateDate(), item.getUpdateDate(), priceDTOs, barcodeDTOs);
+
+            logger.trace("Успешное преобразование Item в DTO: {}", dto);
+            return dto;
+        } catch (Exception e) {
+            String errorMsg = String.format("Ошибка преобразования Item в DTO (Артикул: %s)", item.getArticle());
+            logger.error(errorMsg, e);
+            throw new MappingException(errorMsg, e);
+        }
     }
 
     public Item toEntity(ItemDTO itemDTO) {
         if (itemDTO == null) {
-            logger.debug("Передан null вместо ItemDTO, возвращаем null");
+            logger.warn("Попытка преобразования null ItemDTO в сущность");
             return null;
         }
 
-        logger.debug("Начало преобразования ItemDTO в Entity для артикула: {}", itemDTO.article());
+        logger.debug("Преобразование ItemDTO в сущность (Артикул: {})", itemDTO.article());
 
-        Item item = new Item();
-        item.setArticle(itemDTO.article());
-        item.setName(itemDTO.name());
-        item.setCreateDate(itemDTO.createDate());
-        item.setUpdateDate(itemDTO.updateDate());
+        try {
+            Item item = new Item();
+            item.setArticle(itemDTO.article());
+            item.setName(itemDTO.name());
+            item.setCreateDate(itemDTO.createDate());
+            item.setUpdateDate(itemDTO.updateDate());
 
-        Set<Barcode> barcodes = itemDTO.barcodes().stream()
-                .map(barcodeMapper::toEntity)
-                .collect(Collectors.toSet());
-        item.setBarcodes(barcodes);
+            Set<Barcode> barcodes = Collections.emptySet();
+            if (itemDTO.barcodes() != null) {
+                barcodes = itemDTO.barcodes().stream()
+                        .map(barcodeDTO -> {
+                            try {
+                                return barcodeMapper.toEntity(barcodeDTO);
+                            } catch (Exception e) {
+                                logger.warn("Ошибка преобразования BarcodeDTO (Штрих-код: {})", barcodeDTO.barcode(), e);
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
+            }
+            item.setBarcodes(barcodes);
 
-        Set<Price> prices = itemDTO.prices().stream()
-                .map(priceMapper::toEntity)
-                .collect(Collectors.toSet());
-        item.setPrices(prices);
+            Set<Price> prices = Collections.emptySet();
+            if (itemDTO.prices() != null) {
+                prices = itemDTO.prices().stream()
+                        .map(priceDTO -> {
+                            try {
+                                return priceMapper.toEntity(priceDTO);
+                            } catch (Exception e) {
+                                logger.warn("Ошибка преобразования PriceDTO (ID: {})", priceDTO.id(), e);
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
+            }
+            item.setPrices(prices);
 
-        logger.debug("Успешно преобразовано ItemDTO в Entity для артикула: {}", itemDTO.article());
-        return item;
+            logger.trace("Успешное преобразование ItemDTO в сущность: {}", item);
+            return item;
+        } catch (Exception e) {
+            String errorMsg = String.format("Ошибка преобразования ItemDTO в сущность (Артикул: %s)", itemDTO.article());
+            logger.error(errorMsg, e);
+            throw new MappingException(errorMsg, e);
+        }
     }
 
     public Item toEntity(CreateItemDTO createItemDTO) {
@@ -118,46 +175,49 @@ public class ItemMapper {
 
     public Item toEntity(UpdateItemDTO updateItemDTO, Item existingItem) {
         if (updateItemDTO == null || existingItem == null) {
-            logger.debug("Передан null вместо UpdateItemDTO или существующего Item, возвращаем null");
+            logger.warn("Попытка обновления с null UpdateItemDTO или существующего Item");
             return null;
         }
 
-        logger.debug("Начало обновления Item для артикула: {}", updateItemDTO.article());
+        logger.debug("Обновление Item (Артикул: {})", updateItemDTO.article());
 
-        if (updateItemDTO.name() != null) {
-            logger.debug("Обновление имени для артикула: {}", updateItemDTO.article());
-            existingItem.setName(updateItemDTO.name());
-        }
-
-        if (updateItemDTO.barcodes() != null) {
-            logger.debug("Обновление штрих-кодов для артикула: {}", updateItemDTO.article());
-            if (existingItem.getBarcodes() == null) {
-                existingItem.setBarcodes(new HashSet<>());
+        try {
+            if (updateItemDTO.name() != null) {
+                existingItem.setName(updateItemDTO.name());
             }
-            updateItemDTO.barcodes().stream()
-                    .filter(dto -> existingItem.getBarcodes().stream()
-                            .noneMatch(b -> b.getBarcode().equals(dto.barcode())))
-                    .forEach(dto -> {
-                        Barcode barcode = new Barcode(dto.barcode(), existingItem);
-                        existingItem.getBarcodes().add(barcode);
-                    });
-        }
 
-        if (updateItemDTO.prices() != null) {
-            logger.debug("Обновление цен для артикула: {}", updateItemDTO.article());
-            if (existingItem.getPrices() == null) {
-                existingItem.setPrices(new HashSet<>());
+            if (updateItemDTO.barcodes() != null) {
+                if (existingItem.getBarcodes() == null) {
+                    existingItem.setBarcodes(new HashSet<>());
+                }
+                updateItemDTO.barcodes().stream()
+                        .filter(dto -> existingItem.getBarcodes().stream()
+                                .noneMatch(b -> b.getBarcode().equals(dto.barcode())))
+                        .forEach(dto -> {
+                            Barcode barcode = new Barcode(dto.barcode(), existingItem);
+                            existingItem.getBarcodes().add(barcode);
+                        });
             }
-            updateItemDTO.prices().stream()
-                    .filter(dto -> existingItem.getPrices().stream()
-                            .noneMatch(p -> p.getPrice().equals(dto.price())))
-                    .forEach(dto -> {
-                        Price price = new Price(null, dto.price(), existingItem);
-                        existingItem.getPrices().add(price);
-                    });
-        }
 
-        logger.debug("Успешно обновлен Item для артикула: {}", updateItemDTO.article());
-        return existingItem;
+            if (updateItemDTO.prices() != null) {
+                if (existingItem.getPrices() == null) {
+                    existingItem.setPrices(new HashSet<>());
+                }
+                updateItemDTO.prices().stream()
+                        .filter(dto -> existingItem.getPrices().stream()
+                                .noneMatch(p -> p.getPrice().equals(dto.price())))
+                        .forEach(dto -> {
+                            Price price = new Price(null, dto.price(), existingItem);
+                            existingItem.getPrices().add(price);
+                        });
+            }
+
+            logger.trace("Успешное обновление Item: {}", existingItem);
+            return existingItem;
+        } catch (Exception e) {
+            String errorMsg = String.format("Ошибка обновления Item (Артикул: %s)", updateItemDTO.article());
+            logger.error(errorMsg, e);
+            throw new MappingException(errorMsg, e);
+        }
     }
 }

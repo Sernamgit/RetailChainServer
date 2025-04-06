@@ -6,22 +6,23 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
+@Schema(description = "DTO магазина")
 public record ShopDTO(
         @Schema(description = "Уникальный идентификатор магазина", example = "1")
         Long id,
 
         @NotNull(message = "Номер магазина обязателен")
-        @Schema(description = "Номер магазина", example = "101")
+        @Schema(description = "Уникальный номер магазина в системе", example = "101")
         Long number,
 
         @NotBlank(message = "Название магазина обязательно")
-        @Schema(description = "Название магазина", example = "Центральный")
+        @Schema(description = "Наименование магазина", example = "Центральный")
         String name,
 
         @NotBlank(message = "Адрес магазина обязателен")
-        @Schema(description = "Адрес магазина", example = "ул. Ленина, 1")
+        @Schema(description = "Физический адрес магазина", example = "ул. Ленина, 1")
         String address,
 
-        @Schema(description = "Список касс магазина")
+        @Schema(description = "Список касс, принадлежащих магазину")
         List<CashDTO> cashList
 ) {}

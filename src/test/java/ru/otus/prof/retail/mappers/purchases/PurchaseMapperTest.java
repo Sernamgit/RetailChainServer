@@ -1,6 +1,5 @@
 package ru.otus.prof.retail.mappers.purchases;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,85 +10,134 @@ import ru.otus.prof.retail.dto.purchases.PurchaseDTO;
 import ru.otus.prof.retail.entities.purchases.Position;
 import ru.otus.prof.retail.entities.purchases.Purchase;
 import ru.otus.prof.retail.entities.purchases.Shift;
+import ru.otus.prof.retail.exception.MappingException;
 import ru.otus.prof.retail.repositories.purchases.ShiftRepository;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
-
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PurchaseMapperTest {
 
     @Mock
-    private PositionMapper positionMapper;
+    private ShiftRepository shiftRepository;
 
     @Mock
-    private ShiftRepository shiftRepository;
+    private PositionMapper positionMapper;
 
     @InjectMocks
     private PurchaseMapper purchaseMapper;
 
-    private Shift shift;
-
-    @BeforeEach
-    void setup() {
-        shift = new Shift();
-        shift.setId(1L);
-    }
-
     @Test
-    void testToDTO() {
+    void toDTO_ShouldConvertPurchaseToDTO() {
+        Shift shift = new Shift();
+        shift.setId(1L);
+
         Position position = new Position();
-        position.setId(1L);
-        position.setBarcode("123456789");
-        position.setArticle(123L);
-        position.setPositionName("Test Position");
-        position.setPrice(100L);
+        position.setId(10L);
 
         Purchase purchase = new Purchase();
-        purchase.setId(1L);
+        purchase.setId(100L);
         purchase.setShift(shift);
         purchase.setPurchaseDate(LocalDateTime.now());
-        purchase.setTotal(100L);
-        purchase.setPositions(Collections.singletonList(position));
+        purchase.setTotal(15000L);
+        purchase.setPositions(List.of(position));
 
-        when(positionMapper.toDTO(position)).thenReturn(new PositionDTO(1L, 1L, "123456789", 123L, "Test Position", 100L));
+        PositionDTO positionDTO = new PositionDTO(
+                10L, 100L, "123456789012", 789012L, "Test Product", 10000L
+        );
 
-        PurchaseDTO purchaseDTO = purchaseMapper.toDTO(purchase);
+        when(positionMapper.toDTO(position)).thenReturn(positionDTO);
 
-        assertNotNull(purchaseDTO);
-        assertEquals(purchase.getId(), purchaseDTO.id());
-        assertEquals(purchase.getShift().getId(), purchaseDTO.shiftId());
-        assertEquals(purchase.getPurchaseDate(), purchaseDTO.purchaseDate());
-        assertEquals(purchase.getTotal(), purchaseDTO.total());
-        assertEquals(1, purchaseDTO.positions().size());
+        PurchaseDTO dto = purchaseMapper.toDTO(purchase);
 
-        verify(positionMapper, times(1)).toDTO(position);
+        assertNotNull(dto);
+        assertEquals(purchase.getId(), dto.id());
+        assertEquals(shift.getId(), dto.shiftId());
+        assertEquals(purchase.getPurchaseDate(), dto.purchaseDate());
+        assertEquals(purchase.getTotal(), dto.total());
+        assertEquals(1, dto.positions().size());
+        assertEquals(positionDTO, dto.positions().get(0));
     }
 
     @Test
-    void testToEntity() {
-        PositionDTO positionDTO = new PositionDTO(1L, 1L, "123456789", 123L, "Test Position", 100L);
-        PurchaseDTO purchaseDTO = new PurchaseDTO(1L, 1L, LocalDateTime.now(), 100L, Collections.singletonList(positionDTO));
+    void toDTO_ShouldThrowExceptionWhenPositionsAreEmpty() {
+        Shift shift = new Shift();
+        shift.setId(1L);
+
+        Purchase purchase = new Purchase();
+        purchase.setId(100L);
+        purchase.setShift(shift);
+        purchase.setPositions(List.of());
+
+        assertThrows(MappingException.class, () -> purchaseMapper.toDTO(purchase));
+    }
+
+    @Test
+    void toDTO_ShouldThrowExceptionWhenShiftIsNull() {
+        Purchase purchase = new Purchase();
+        purchase.setId(100L);
+        purchase.setPositions(List.of(new Position()));
+
+        assertThrows(MappingException.class, () -> purchaseMapper.toDTO(purchase));
+    }
+
+    @Test
+    void toEntity_ShouldConvertDTOToPurchase() {
+        PositionDTO positionDTO = new PositionDTO(
+                10L, 100L, "123456789012", 789012L, "Test Product", 10000L
+        );
+
+        PurchaseDTO dto = new PurchaseDTO(
+                100L, 1L, LocalDateTime.now(), 15000L, List.of(positionDTO)
+        );
+
+        Shift shift = new Shift();
+        shift.setId(1L);
+
+        Position position = new Position();
+        position.setId(10L);
 
         when(shiftRepository.findById(anyLong())).thenReturn(Optional.of(shift));
-        when(positionMapper.toEntity(positionDTO)).thenReturn(new Position());
+        when(positionMapper.toEntity(positionDTO)).thenReturn(position);
 
-        Purchase purchase = purchaseMapper.toEntity(purchaseDTO);
+        Purchase purchase = purchaseMapper.toEntity(dto);
 
         assertNotNull(purchase);
-        assertEquals(purchaseDTO.id(), purchase.getId());
-        assertEquals(purchaseDTO.purchaseDate(), purchase.getPurchaseDate());
-        assertEquals(purchaseDTO.total(), purchase.getTotal());
+        assertEquals(dto.id(), purchase.getId());
+        assertEquals(dto.purchaseDate(), purchase.getPurchaseDate());
+        assertEquals(dto.total(), purchase.getTotal());
         assertEquals(shift, purchase.getShift());
         assertEquals(1, purchase.getPositions().size());
+        assertEquals(position, purchase.getPositions().get(0));
+    }
 
-        verify(shiftRepository, times(1)).findById(anyLong());
-        verify(positionMapper, times(1)).toEntity(positionDTO);
+    @Test
+    void toEntity_ShouldThrowExceptionWhenShiftNotFound() {
+        PositionDTO positionDTO = new PositionDTO(
+                10L, 100L, "123456789012", 789012L, "Test Product", 10000L
+        );
+
+        PurchaseDTO dto = new PurchaseDTO(
+                100L, 1L, LocalDateTime.now(), 15000L, List.of(positionDTO)
+        );
+
+        when(shiftRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        assertThrows(MappingException.class, () -> purchaseMapper.toEntity(dto));
+    }
+
+    @Test
+    void toEntity_ShouldThrowExceptionWhenPositionsAreEmpty() {
+        PurchaseDTO dto = new PurchaseDTO(
+                100L, 1L, LocalDateTime.now(), 15000L, List.of()
+        );
+
+        assertThrows(MappingException.class, () -> purchaseMapper.toEntity(dto));
     }
 }

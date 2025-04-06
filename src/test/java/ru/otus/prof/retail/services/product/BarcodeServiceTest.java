@@ -7,8 +7,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import ru.otus.prof.retail.dto.product.BarcodeDTO;
-import ru.otus.prof.retail.exception.BarcodeAlreadyExistsException;
-import ru.otus.prof.retail.exception.BarcodeNotFoundException;
+import ru.otus.prof.retail.exception.product.BarcodeAlreadyExistsException;
+import ru.otus.prof.retail.exception.product.BarcodeNotFoundException;
+import ru.otus.prof.retail.exception.product.ItemNotFoundException;
 import ru.otus.prof.retail.repositories.product.BarcodeRepository;
 import ru.otus.prof.retail.repositories.product.ItemRepository;
 
@@ -54,7 +55,15 @@ public class BarcodeServiceTest {
 
     @Test
     @Rollback
-    void testCreateBarcodes() {
+    void testCreateBarcode_shouldThrowWhenItemNotFound() {
+        BarcodeDTO newBarcodeDTO = new BarcodeDTO("5555555555555", 9999L);
+
+        assertThrows(ItemNotFoundException.class, () -> barcodeService.createBarcode(newBarcodeDTO));
+    }
+
+    @Test
+    @Rollback
+    void testCreateBarcodesBatch() {
         BarcodeDTO barcodeDTO1 = new BarcodeDTO("3333333333333", 1001L);
         BarcodeDTO barcodeDTO2 = new BarcodeDTO("4444444444444", 1001L);
 
@@ -72,11 +81,29 @@ public class BarcodeServiceTest {
 
     @Test
     @Rollback
-    void testCreateBarcodes_shouldThrowWhenAnyBarcodeExists() {
+    void testCreateBarcodesBatch_shouldThrowWhenAnyBarcodeExists() {
         BarcodeDTO barcodeDTO1 = new BarcodeDTO("3333333333333", 1001L);
         BarcodeDTO barcodeDTO2 = new BarcodeDTO("1001111111111", 1001L);
 
-        assertThrows(BarcodeAlreadyExistsException.class, () -> barcodeService.createBarcodes(List.of(barcodeDTO1, barcodeDTO2)));
+        assertThrows(BarcodeAlreadyExistsException.class,
+                () -> barcodeService.createBarcodes(List.of(barcodeDTO1, barcodeDTO2)));
+    }
+
+    @Test
+    @Rollback
+    void testCreateBarcodesBatch_shouldThrowWhenItemNotFound() {
+        BarcodeDTO barcodeDTO1 = new BarcodeDTO("3333333333333", 9999L);
+        BarcodeDTO barcodeDTO2 = new BarcodeDTO("4444444444444", 9999L);
+
+        assertThrows(ItemNotFoundException.class,
+                () -> barcodeService.createBarcodes(List.of(barcodeDTO1, barcodeDTO2)));
+    }
+
+    @Test
+    @Rollback
+    void testCreateBarcodesBatch_shouldThrowWhenEmptyList() {
+        assertThrows(IllegalArgumentException.class,
+                () -> barcodeService.createBarcodes(List.of()));
     }
 
     @Test
@@ -103,14 +130,15 @@ public class BarcodeServiceTest {
 
         barcodeService.deleteAllBarcodesByItemArticle(1001L);
 
-        List<BarcodeDTO> barcodesAfter = barcodeService.getBarcodesByItemArticle(1001L);
-        assertThat(barcodesAfter).isEmpty();
+        assertThrows(BarcodeNotFoundException.class,
+                () -> barcodeService.getBarcodesByItemArticle(1001L));
     }
 
     @Test
     @Rollback
     void testDeleteAllBarcodesByItemArticle_withNonExistentArticle() {
-        assertDoesNotThrow(() -> barcodeService.deleteAllBarcodesByItemArticle(9999L));
+        assertThrows(ItemNotFoundException.class,
+                () -> barcodeService.deleteAllBarcodesByItemArticle(9999L));
     }
 
     @Test
@@ -127,8 +155,17 @@ public class BarcodeServiceTest {
     @Test
     @Rollback
     void testGetBarcodesByItemArticle_withNonExistentArticle() {
-        List<BarcodeDTO> barcodes = barcodeService.getBarcodesByItemArticle(9999L);
-        assertThat(barcodes).isEmpty();
+        assertThrows(ItemNotFoundException.class,
+                () -> barcodeService.getBarcodesByItemArticle(9999L));
+    }
+
+    @Test
+    @Rollback
+    void testGetBarcodesByItemArticle_withNoBarcodes() {
+        barcodeService.deleteAllBarcodesByItemArticle(1002L);
+
+        assertThrows(BarcodeNotFoundException.class,
+                () -> barcodeService.getBarcodesByItemArticle(1002L));
     }
 
     @Test
@@ -144,7 +181,7 @@ public class BarcodeServiceTest {
     @Test
     @Rollback
     void testGetBarcode_withNonExistentBarcode() {
-        BarcodeDTO barcodeDTO = barcodeService.getBarcode("9999999999999");
-        assertThat(barcodeDTO).isNull();
+        assertThrows(BarcodeNotFoundException.class,
+                () -> barcodeService.getBarcode("9999999999999"));
     }
 }

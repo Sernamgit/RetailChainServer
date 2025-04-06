@@ -1,18 +1,19 @@
 package ru.otus.prof.retail.services.purchaes;
 
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import ru.otus.prof.retail.dto.purchases.ShiftDTO;
+import ru.otus.prof.retail.dto.purchases.ShiftSearchRequest;
+import ru.otus.prof.retail.exception.purchases.ShiftNotFoundException;
+import ru.otus.prof.retail.exception.purchases.ShiftValidationException;
 import ru.otus.prof.retail.services.purchases.ShiftService;
 
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -24,19 +25,17 @@ public class ShiftServiceTest {
     @Test
     public void testGetAllShiftsByCloseDate() {
         LocalDate closeDate = LocalDate.of(2024, 1, 1);
-        List<ShiftDTO> shifts = shiftService.getAllShitsByCloseDate(closeDate, true);
+        List<ShiftDTO> shifts = shiftService.getAllShiftsByCloseDate(closeDate, true);
 
         assertNotNull(shifts);
         assertEquals(2, shifts.size());
 
-        // Проверяем данные первой смены
         ShiftDTO firstShift = shifts.get(0);
         assertEquals(1L, firstShift.shiftNumber());
         assertEquals(1L, firstShift.shopNumber());
         assertEquals(1L, firstShift.cashNumber());
         assertEquals(201L, firstShift.total());
 
-        // Проверяем данные второй смены
         ShiftDTO secondShift = shifts.get(1);
         assertEquals(2L, secondShift.shiftNumber());
         assertEquals(2L, secondShift.shopNumber());
@@ -53,14 +52,12 @@ public class ShiftServiceTest {
         assertNotNull(shifts);
         assertEquals(2, shifts.size());
 
-        // Проверяем данные первой смены
         ShiftDTO firstShift = shifts.get(0);
         assertEquals(1L, firstShift.shiftNumber());
         assertEquals(1L, firstShift.shopNumber());
         assertEquals(1L, firstShift.cashNumber());
         assertEquals(201L, firstShift.total());
 
-        // Проверяем данные второй смены
         ShiftDTO secondShift = shifts.get(1);
         assertEquals(2L, secondShift.shiftNumber());
         assertEquals(2L, secondShift.shopNumber());
@@ -72,7 +69,7 @@ public class ShiftServiceTest {
     public void testGetShiftByShopNumberAndCloseDate() {
         Long shopNumber = 1L;
         LocalDate closeDate = LocalDate.of(2024, 1, 1);
-        List<ShiftDTO> shifts = shiftService.getShiftByShopNumberAndCloseDate(shopNumber, closeDate, true);
+        List<ShiftDTO> shifts = shiftService.getShiftsByShopNumberAndCloseDate(shopNumber, closeDate, true);
 
         assertNotNull(shifts);
         assertEquals(1, shifts.size());
@@ -134,5 +131,65 @@ public class ShiftServiceTest {
         assertEquals(2L, shift.shopNumber());
         assertEquals(2L, shift.cashNumber());
         assertEquals(200L, shift.total());
+    }
+
+    @Test
+    public void testSearchShifts_WithDateRange() {
+        ShiftSearchRequest request = new ShiftSearchRequest(
+                1L, null, null,
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 1, 2),
+                true
+        );
+
+        List<ShiftDTO> shifts = shiftService.searchShifts(request);
+
+        assertNotNull(shifts);
+        assertEquals(1, shifts.size());
+        assertEquals(1L, shifts.get(0).shopNumber());
+    }
+
+    @Test
+    public void testSearchShifts_WithSingleDate() {
+        ShiftSearchRequest request = new ShiftSearchRequest(
+                1L, null,
+                LocalDate.of(2024, 1, 1),
+                null, null,
+                true
+        );
+
+        List<ShiftDTO> shifts = shiftService.searchShifts(request);
+
+        assertNotNull(shifts);
+        assertEquals(1, shifts.size());
+        assertEquals(1L, shifts.get(0).shopNumber());
+    }
+
+    @Test
+    public void testSearchShiftsBatch() {
+        List<ShiftSearchRequest> requests = List.of(
+                new ShiftSearchRequest(1L, null, LocalDate.of(2024, 1, 1), null, null, true),
+                new ShiftSearchRequest(2L, null, null, LocalDate.of(2024, 1, 1), LocalDate.of(2024, 1, 2), true)
+        );
+
+        List<ShiftDTO> shifts = shiftService.searchShiftsBatch(requests);
+
+        assertNotNull(shifts);
+        assertEquals(2, shifts.size());
+        shifts.forEach(shift -> {
+        });
+    }
+
+    @Test
+    public void testGetAllShiftsByCloseDate_NotFound() {
+        LocalDate closeDate = LocalDate.of(2099, 1, 1);
+        assertThrows(ShiftNotFoundException.class, () ->shiftService.getAllShiftsByCloseDate(closeDate, true));
+    }
+
+    @Test
+    public void testValidateDateRange_InvalidRange() {
+        LocalDate startDate = LocalDate.of(2024, 1, 2);
+        LocalDate endDate = LocalDate.of(2024, 1, 1);
+        assertThrows(ShiftValidationException.class, () ->shiftService.getAllShiftsByCloseDateRange(startDate, endDate, true));
     }
 }

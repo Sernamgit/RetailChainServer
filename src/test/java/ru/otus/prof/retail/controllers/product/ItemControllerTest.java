@@ -10,8 +10,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.otus.prof.retail.dto.product.CreateItemDTO;
 import ru.otus.prof.retail.dto.product.ItemDTO;
 import ru.otus.prof.retail.dto.product.UpdateItemDTO;
-import ru.otus.prof.retail.exception.ItemNotFoundException;
-import ru.otus.prof.retail.exception.ItemValidationException;
+import ru.otus.prof.retail.exception.product.ItemNotFoundException;
+import ru.otus.prof.retail.exception.product.ItemValidationException;
 import ru.otus.prof.retail.services.product.ItemService;
 
 import java.time.LocalDateTime;

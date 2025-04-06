@@ -1,6 +1,5 @@
 package ru.otus.prof.retail.mappers.purchases;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,10 +12,10 @@ import ru.otus.prof.retail.entities.purchases.Shift;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ShiftMapperTest {
@@ -27,62 +26,100 @@ class ShiftMapperTest {
     @InjectMocks
     private ShiftMapper shiftMapper;
 
-    private Purchase purchase;
-
-    @BeforeEach
-    void setup() {
-        purchase = new Purchase();
-        purchase.setId(1L);
-    }
-
     @Test
-    void testToDTO() {
+    void toDTO_ShouldConvertShiftToDTOWithoutPurchases() {
         Shift shift = new Shift();
         shift.setId(1L);
-        shift.setShiftNumber(1L);
+        shift.setShiftNumber(123L);
         shift.setShopNumber(1L);
         shift.setCashNumber(1L);
         shift.setOpenTime(LocalDateTime.now());
-        shift.setCloseTime(LocalDateTime.now());
-        shift.setTotal(100L);
-        shift.setPurchases(Collections.singleton(purchase));
+        shift.setCloseTime(LocalDateTime.now().plusHours(8));
+        shift.setTotal(150000L);
 
-        when(purchaseMapper.toDTO(purchase)).thenReturn(new PurchaseDTO(1L, 1L, LocalDateTime.now(), 100L, Collections.emptyList()));
+        ShiftDTO dto = shiftMapper.toDTO(shift, false);
 
-        ShiftDTO shiftDTO = shiftMapper.toDTO(shift);
-
-        assertNotNull(shiftDTO);
-        assertEquals(shift.getId(), shiftDTO.id());
-        assertEquals(shift.getShiftNumber(), shiftDTO.shiftNumber());
-        assertEquals(shift.getShopNumber(), shiftDTO.shopNumber());
-        assertEquals(shift.getCashNumber(), shiftDTO.cashNumber());
-        assertEquals(shift.getOpenTime(), shiftDTO.openTime());
-        assertEquals(shift.getCloseTime(), shiftDTO.closeTime());
-        assertEquals(shift.getTotal(), shiftDTO.total());
-        assertEquals(1, shiftDTO.purchases().size());
-
-        verify(purchaseMapper, times(1)).toDTO(purchase);
+        assertNotNull(dto);
+        assertEquals(shift.getId(), dto.id());
+        assertEquals(shift.getShiftNumber(), dto.shiftNumber());
+        assertEquals(shift.getShopNumber(), dto.shopNumber());
+        assertEquals(shift.getCashNumber(), dto.cashNumber());
+        assertEquals(shift.getOpenTime(), dto.openTime());
+        assertEquals(shift.getCloseTime(), dto.closeTime());
+        assertEquals(shift.getTotal(), dto.total());
+        assertTrue(dto.purchases().isEmpty());
     }
 
     @Test
-    void testToEntity() {
-        PurchaseDTO purchaseDTO = new PurchaseDTO(1L, 1L, LocalDateTime.now(), 100L, Collections.emptyList());
-        ShiftDTO shiftDTO = new ShiftDTO(1L, 1L, 1L, 1L, LocalDateTime.now(), LocalDateTime.now(), 100L, Collections.singleton(purchaseDTO));
+    void toDTO_ShouldConvertShiftToDTOWithPurchases() {
+        Shift shift = new Shift();
+        shift.setId(1L);
+        Purchase purchase = new Purchase();
+        purchase.setId(100L);
+        shift.setPurchases(Set.of(purchase));
 
-        when(purchaseMapper.toEntity(purchaseDTO)).thenReturn(new Purchase());
+        PurchaseDTO purchaseDTO = new PurchaseDTO(
+                100L, 1L, LocalDateTime.now(), 15000L, Collections.emptyList()
+        );
 
-        Shift shift = shiftMapper.toEntity(shiftDTO);
+        when(purchaseMapper.toDTO(purchase)).thenReturn(purchaseDTO);
+
+        ShiftDTO dto = shiftMapper.toDTO(shift, true);
+
+        assertNotNull(dto);
+        assertEquals(1, dto.purchases().size());
+        assertEquals(purchaseDTO, dto.purchases().iterator().next());
+    }
+
+    @Test
+    void toDTO_ShouldReturnNullWhenShiftIsNull() {
+        assertNull(shiftMapper.toDTO(null, false));
+    }
+
+    @Test
+    void toEntity_ShouldConvertDTOToShiftWithoutPurchases() {
+        ShiftDTO dto = new ShiftDTO(
+                1L, 123L, 1L, 1L, LocalDateTime.now(), LocalDateTime.now().plusHours(8), 150000L, Collections.emptySet()
+        );
+
+        Shift shift = shiftMapper.toEntity(dto);
 
         assertNotNull(shift);
-        assertEquals(shiftDTO.id(), shift.getId());
-        assertEquals(shiftDTO.shiftNumber(), shift.getShiftNumber());
-        assertEquals(shiftDTO.shopNumber(), shift.getShopNumber());
-        assertEquals(shiftDTO.cashNumber(), shift.getCashNumber());
-        assertEquals(shiftDTO.openTime(), shift.getOpenTime());
-        assertEquals(shiftDTO.closeTime(), shift.getCloseTime());
-        assertEquals(shiftDTO.total(), shift.getTotal());
-        assertEquals(1, shift.getPurchases().size());
+        assertEquals(dto.id(), shift.getId());
+        assertEquals(dto.shiftNumber(), shift.getShiftNumber());
+        assertEquals(dto.shopNumber(), shift.getShopNumber());
+        assertEquals(dto.cashNumber(), shift.getCashNumber());
+        assertEquals(dto.openTime(), shift.getOpenTime());
+        assertEquals(dto.closeTime(), shift.getCloseTime());
+        assertEquals(dto.total(), shift.getTotal());
+        assertTrue(shift.getPurchases().isEmpty());
+    }
 
-        verify(purchaseMapper, times(1)).toEntity(purchaseDTO);
+    @Test
+    void toEntity_ShouldConvertDTOToShiftWithPurchases() {
+        PurchaseDTO purchaseDTO = new PurchaseDTO(
+                100L, 1L, LocalDateTime.now(), 15000L, Collections.emptyList()
+        );
+
+        ShiftDTO dto = new ShiftDTO(
+                1L, 123L, 1L, 1L, LocalDateTime.now(), LocalDateTime.now().plusHours(8),
+                150000L, Set.of(purchaseDTO)
+        );
+
+        Purchase purchase = new Purchase();
+        purchase.setId(100L);
+
+        when(purchaseMapper.toEntity(purchaseDTO)).thenReturn(purchase);
+
+        Shift shift = shiftMapper.toEntity(dto);
+
+        assertNotNull(shift);
+        assertEquals(1, shift.getPurchases().size());
+        assertEquals(purchase, shift.getPurchases().iterator().next());
+    }
+
+    @Test
+    void toEntity_ShouldReturnNullWhenDTOIsNull() {
+        assertNull(shiftMapper.toEntity(null));
     }
 }

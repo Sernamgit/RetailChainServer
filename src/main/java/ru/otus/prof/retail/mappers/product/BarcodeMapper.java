@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import ru.otus.prof.retail.dto.product.BarcodeDTO;
 import ru.otus.prof.retail.entities.product.Barcode;
 import ru.otus.prof.retail.entities.product.Item;
+import ru.otus.prof.retail.exception.MappingException;
+import ru.otus.prof.retail.exception.product.ItemNotFoundException;
 import ru.otus.prof.retail.repositories.product.ItemRepository;
 
 @Component
@@ -19,38 +21,60 @@ public class BarcodeMapper {
 
     public BarcodeDTO toDTO(Barcode barcode) {
         if (barcode == null) {
-            logger.warn("Попытка преобразования null объекта Barcode в DTO");
+            logger.warn("Попытка преобразования null Barcode в DTO");
             return null;
         }
 
-        logger.debug("Преобразование Barcode в DTO. Штрих-код: {}, артикул товара: {}",
-                barcode.getBarcode(), barcode.getItem().getArticle());
+        logger.debug("Преобразование Barcode в DTO (Штрих-код: {})", barcode.getBarcode());
 
-        BarcodeDTO dto = new BarcodeDTO(barcode.getBarcode(), barcode.getItem().getArticle());
-        logger.debug("Успешно создан BarcodeDTO: {}", dto);
+        try {
+            if (barcode.getItem() == null) {
+                throw new MappingException("Штрих-код должен быть привязан к товару");
+            }
 
-        return dto;
+            BarcodeDTO dto = new BarcodeDTO(
+                    barcode.getBarcode(),
+                    barcode.getItem().getArticle()
+            );
+
+            logger.trace("Успешное преобразование Barcode в DTO: {}", dto);
+            return dto;
+        } catch (Exception e) {
+            String errorMsg = String.format("Ошибка преобразования Barcode в DTO (Штрих-код: %s)",
+                    barcode.getBarcode());
+            logger.error(errorMsg, e);
+            throw new MappingException(errorMsg, e);
+        }
     }
 
     public Barcode toEntity(BarcodeDTO barcodeDTO) {
         if (barcodeDTO == null) {
-            logger.warn("Попытка преобразования null объекта BarcodeDTO в сущность");
+            logger.warn("Попытка преобразования null BarcodeDTO в сущность");
             return null;
         }
 
-        logger.debug("Преобразование BarcodeDTO в сущность. Штрих-код: {}, артикул товара: {}",
-                barcodeDTO.barcode(), barcodeDTO.article());
+        logger.debug("Преобразование BarcodeDTO в сущность (Штрих-код: {})", barcodeDTO.barcode());
 
-        Item item = itemRepository.findById(barcodeDTO.article())
-                .orElseThrow(() -> {
-                    String errorMessage = String.format("Ошибка преобразования: товар с артикулом %d не найден", barcodeDTO.article());
-                    logger.error(errorMessage);
-                    return new RuntimeException(errorMessage);
-                });
+        try {
+            Item item = itemRepository.findById(barcodeDTO.article())
+                    .orElseThrow(() -> {
+                        String errorMsg = String.format("Товар с артикулом %d не найден",
+                                barcodeDTO.article());
+                        logger.error(errorMsg);
+                        return new ItemNotFoundException(errorMsg);
+                    });
 
-        Barcode entity = new Barcode(barcodeDTO.barcode(), item);
-        logger.debug("Успешно создана сущность Barcode: {}", entity);
+            Barcode barcode = new Barcode(barcodeDTO.barcode(), item);
 
-        return entity;
+            logger.trace("Успешное преобразование BarcodeDTO в сущность: {}", barcode);
+            return barcode;
+        } catch (ItemNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            String errorMsg = String.format("Ошибка преобразования BarcodeDTO в сущность (Штрих-код: %s)",
+                    barcodeDTO.barcode());
+            logger.error(errorMsg, e);
+            throw new MappingException(errorMsg, e);
+        }
     }
 }
