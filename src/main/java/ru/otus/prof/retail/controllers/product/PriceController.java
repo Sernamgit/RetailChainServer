@@ -23,7 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/product/price")
 @Validated
-@Tag(name = "Управление ценами", description = "API для работы с ценами товаров")
+@Tag(name = "Цены", description = "API для работы с ценами товаров")
 public class PriceController {
     private static final Logger logger = LoggerFactory.getLogger(PriceController.class);
 

@@ -22,7 +22,7 @@ import ru.otus.prof.retail.services.product.ItemService;
 
 @RestController
 @RequestMapping("/api/v1/product/item")
-@Tag(name = "Управление товарами", description = "API для работы с товарами")
+@Tag(name = "Товары", description = "API для работы с товарами")
 @Validated
 public class ItemController {
     private static final Logger logger = LoggerFactory.getLogger(ItemController.class);

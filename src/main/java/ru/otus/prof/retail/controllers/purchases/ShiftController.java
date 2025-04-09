@@ -27,7 +27,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/purchases/shift")
 @Validated
-@Tag(name = "Управление сменами", description = "API для работы с кассовыми сменами")
+@Tag(name = "Смены", description = "API для работы с кассовыми сменами")
 public class ShiftController {
     private static final Logger logger = LoggerFactory.getLogger(ShiftController.class);
 

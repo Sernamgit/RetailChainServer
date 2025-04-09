@@ -24,7 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/product/barcode")
 @Validated
-@Tag(name = "Управление штрих-кодами", description = "API для работы со штрих-кодами товаров")
+@Tag(name = "Штрих-коды", description = "API для работы со штрих-кодами товаров")
 public class BarcodeController {
     private static final Logger logger = LoggerFactory.getLogger(BarcodeController.class);
 

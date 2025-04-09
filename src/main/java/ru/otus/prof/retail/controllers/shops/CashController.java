@@ -24,7 +24,7 @@ import ru.otus.prof.retail.services.shops.CashService;
 
 import java.util.List;
 
-@Tag(name = "Управление кассами", description = "API для управления кассовыми аппаратами")
+@Tag(name = "Кассы", description = "API для управления кассовыми аппаратами")
 @Validated
 @RestController
 @RequestMapping("/api/v1/cash")

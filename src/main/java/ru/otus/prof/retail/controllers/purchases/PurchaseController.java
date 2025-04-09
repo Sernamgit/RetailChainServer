@@ -28,7 +28,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/purchases/check")
 @Validated
-@Tag(name = "Purchase Controller", description = "API для работы с чеками покупок")
+@Tag(name = "Продажи", description = "API для работы с чеками покупок")
 public class PurchaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(PurchaseController.class);
